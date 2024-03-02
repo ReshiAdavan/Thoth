@@ -76,8 +76,7 @@ class BasicTokenizer:
     def countCommonEncodedTuples(self, encodedInts: list[int]) -> list[tuple]:
         freqDict = {}
         for i in range(len(encodedInts) - 1):
-            # pair = (encodedInts[i], encodedInts[i + 1])
-            pair = zip(encodedInts, encodedInts[1:])
+            pair = (encodedInts[i], encodedInts[i + 1])
             freqDict[pair] = freqDict.get(pair, 0) + 1 
         # {} [K, V] -> [(encodedInt1, encodedInt2), frequency]
         return sorted(((v, k) for k, v in freqDict.items()), reverse=True)
