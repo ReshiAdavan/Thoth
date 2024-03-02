@@ -6,10 +6,7 @@ MAGENTA = '\033[95m'
 CYAN = '\033[96m'
 RESET = '\033[0m'
 
-class BasicTokenizer:
-    def __init__(self) -> None:
-        super().__init__()
-    
+class BasicTokenizer:        
     """Description: Trains the tokenizer"""
     def train(self, sampleText: str) -> None:
         listOfEncodedIntegers = BasicTokenizerInstance.encoder(sampleText)
@@ -73,7 +70,7 @@ class BasicTokenizer:
     ########################################################
     
     """Description: Returns most common tuples of encoded integers and their frequency of occurence"""
-    def countCommonEncodedTuples(self, encodedInts: list[int]):
+    def countCommonEncodedTuples(self, encodedInts: list[int]) -> list[tuple]:
         freqDict = {}
         for i in range(len(encodedInts) - 1):
             pair = (encodedInts[i], encodedInts[i + 1])
@@ -104,8 +101,8 @@ class BasicTokenizer:
 
 if __name__ == "__main__":
     BasicTokenizerInstance = BasicTokenizer()
-    filePath = "data/input/taylorSwift.txt"
-    with open(filePath, 'r', encoding='utf-8') as file:
-        fileContent = file.read()
-    # text = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
-    BasicTokenizerInstance.train(fileContent)
+    # filePath = "data/input/taylorSwift.txt"
+    # with open(filePath, 'r', encoding='utf-8') as file:
+    #     fileContent = file.read()
+    text = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
+    BasicTokenizerInstance.train(text)
