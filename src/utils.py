@@ -3,7 +3,7 @@
 ###############################################################
 
 """Description: Returns most common tuples of encoded integers and their frequency of occurence"""
-def countCommonEncodedTuples(encodedInts: list[int], freqDict=None) -> list[tuple]:
+def countCommonEncodedTuples(encodedInts: list[int], freqDict: Optional[Dict[Tuple[int, int], int]] = None) -> None:
     freqDict = {} if freqDict is None else freqDict
     for i in range(len(encodedInts) - 1):
         pair = (encodedInts[i], encodedInts[i + 1])
