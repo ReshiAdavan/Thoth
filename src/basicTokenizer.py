@@ -1,11 +1,13 @@
+import utils as util
+
 class BasicTokenizer:
     def __init__(self) -> None:
         pass
         
     """Description: Trains the tokenizer"""
-    def train(self, sampleText: str, vocabSize: int) -> None:
+    def train(self, text: str, vocabSize: int) -> None:
         assert(vocabSize >= 256)
-        if len(sampleText) == 0:
+        if len(text) == 0:
             raise ValueError("[Thoth => train]: String empty. Nothing to train on.")
 
         print("[Thoth => train]: Training...")
@@ -15,7 +17,7 @@ class BasicTokenizer:
         tokens = text.encode('utf-8')
         encodedIntegers = [byte for byte in tokens]
 
-        commonTuples = self.countCommonEncodedTuples(encodedIntegers)
+        commonTuples = util.countCommonEncodedTuples(encodedIntegers)
         sortedCommonTuples = sorted(((v, k) for k, v in commonTuples.items()), reverse=True) 
         self.minter(sortedCommonTuples, encodedIntegers, 256, vocabSize)
         print("[Thoth => train]: Training complete.")
@@ -30,12 +32,12 @@ class BasicTokenizer:
         encodedIntegers = [byte for byte in tokens]
 
         while len(encodedIntegers) >= 2:
-            commonTuples = self.countCommonEncodedTuples(encodedIntegers)
+            commonTuples = util.countCommonEncodedTuples(encodedIntegers)
             pair = min(commonTuples, key=lambda p: self.mints.get(p, float("inf")))
             if pair not in self.mints:
                 break
             idx = self.mints[pair]
-            encodedIntegers = self.merge(pair, encodedIntegers, idx)
+            encodedIntegers = util.merge(pair, encodedIntegers, idx)
         print("[Thoth => encoder]: Encoding Complete...")
         return encodedIntegers
 
@@ -54,7 +56,7 @@ class BasicTokenizer:
     ########################################################
     
     """Description: Returns most common tuples of encoded integers and their frequency of occurence"""
-    def countCommonEncodedTuples(self, encodedInts: list[int]) -> list[tuple]:
+    def countCommonEncodedTuples(encodedInts: list[int]) -> list[tuple]:
         freqDict = {}
         for i in range(len(encodedInts) - 1):
             pair = (encodedInts[i], encodedInts[i + 1])
@@ -81,29 +83,16 @@ class BasicTokenizer:
             self.mintToken(sortedDictTuples, idsList, start_index)
             start_index += 1
 
-    """Description: Removes a tuple of integers from a list of integers"""
-    def merge(self, pair, ids: list[int], idx: int) -> list[int]:
-        mergedIDs, i = [], 0 
-
-        while i < len(ids):
-            if i < len(ids) - 1 and (ids[i], ids[i + 1]) == pair:
-                mergedIDs.append(idx)
-                i += 2 
-            else:
-                mergedIDs.append(ids[i])
-                i += 1 
-        return mergedIDs
-
 if __name__ == "__main__":
     BasicTokenizerInstance = BasicTokenizer()
-    filePath = "data/input/taylorSwift.txt"
+    filePath = "data/taylorSwift.txt"
     with open(filePath, 'r', encoding='utf-8') as file:
         fileContent = file.read()
-    text = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
+    sampleText = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
     vocabSize = 276
 
-    print("\n" + text + "\n")
-    BasicTokenizerInstance.train(text, vocabSize)
+    print("\n" + sampleText + "\n")
+    BasicTokenizerInstance.train(sampleText, vocabSize)
     listOfEncodedIntegers = BasicTokenizerInstance.encoder(fileContent)
     assert(len(listOfEncodedIntegers) > 0)
     decodedText = BasicTokenizerInstance.decoder(listOfEncodedIntegers)
