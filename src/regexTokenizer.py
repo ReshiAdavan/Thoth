@@ -4,7 +4,7 @@ import utils as util
 GPT2_SPLIT_PATTERN = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 GPT4_SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""
 
-class BasicTokenizer:
+class RegexTokenizer:
     def __init__(self) -> None:
         pass
 
@@ -75,7 +75,7 @@ class BasicTokenizer:
         return ids
 
 if __name__ == "__main__":
-    BasicTokenizerInstance = BasicTokenizer()
+    RegexTokenizerInstance = RegexTokenizer()
     filePath = "data/taylorSwift.txt"
     with open(filePath, 'r', encoding='utf-8') as file:
         fileContent = file.read()
@@ -83,9 +83,9 @@ if __name__ == "__main__":
     vocabSize = 276
 
     print("\n" + sampleText + "\n")
-    BasicTokenizerInstance.train(sampleText, vocabSize)
-    listOfEncodedIntegers = BasicTokenizerInstance.encoder(fileContent)
+    RegexTokenizerInstance.train(sampleText, vocabSize)
+    listOfEncodedIntegers = RegexTokenizerInstance.encoder(fileContent)
     assert(len(listOfEncodedIntegers) > 0)
-    decodedText = BasicTokenizerInstance.decoder(listOfEncodedIntegers)
+    decodedText = RegexTokenizerInstance.decoder(listOfEncodedIntegers)
     assert(decodedText != "")
     assert(fileContent == decodedText) # text == decoder(encoder(text))

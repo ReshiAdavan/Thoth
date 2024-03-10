@@ -1,3 +1,5 @@
+import unicodedata
+
 ###############################################################
 ################### SHARED HELPER FUNCTIONS ###################
 ###############################################################
@@ -23,3 +25,14 @@ def merge(pair, ids: list[int], idx: int) -> list[int]:
             mergedIDs.append(ids[i])
             i += 1 
     return mergedIDs
+
+def replaceControlCharacters(s: str) -> str:
+    # Dont print control characters which distort the output (e.g. \n or much worse)
+    # Refs: https://stackoverflow.com/questions/4324790/removing-control-characters-from-a-string-in-python/19016117#19016117 & 
+    # http://www.unicode.org/reports/tr44/#GC_Values_Table
+    chars = [ch if unicodedata.category(ch)[0] != "C" else f"\\u{ord(ch):04x}" for ch in s]        
+    return "".join(chars)
+    
+def renderToken(t: bytes) -> str:
+    # Pretty print a token, escaping control characters
+    return replaceControlCharacters(t.decode('utf-8', errors='replace'))
