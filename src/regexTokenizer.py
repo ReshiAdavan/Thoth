@@ -75,7 +75,7 @@ class RegexTokenizer:
         return ids
 
 if __name__ == "__main__":
-    BasicTokenizerInstance = RegexTokenizer()
+    RegexTokenizerInstance = RegexTokenizer()
     filePath = "data/taylorSwift.txt"
     with open(filePath, 'r', encoding='utf-8') as file:
         fileContent = file.read()
@@ -83,9 +83,9 @@ if __name__ == "__main__":
     vocabSize = 276
 
     print("\n" + sampleText + "\n")
-    BasicTokenizerInstance.train(sampleText, vocabSize)
-    listOfEncodedIntegers = BasicTokenizerInstance.encoder(fileContent)
+    RegexTokenizerInstance.train(sampleText, vocabSize)
+    listOfEncodedIntegers = RegexTokenizerInstance.encoder(fileContent)
     assert(len(listOfEncodedIntegers) > 0)
-    decodedText = BasicTokenizerInstance.decoder(listOfEncodedIntegers)
+    decodedText = RegexTokenizerInstance.decoder(listOfEncodedIntegers)
     assert(decodedText != "")
     assert(fileContent == decodedText) # text == decoder(encoder(text))

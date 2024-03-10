@@ -21,14 +21,14 @@ def bpe(mergeableRanks, token, maxRank):
     return parts
 
 def recoverMerges(mergeableRanks):
-    # the `merges` are already the byte sequences in their merged state 
-    # so we have to recover the original pairings. We can do this by doing
-    # a small BPE training run on all the tokens, in their order.
+    # merges are byte sequences in their merged state so recover the original pairings. 
+    # Do a small BPE training run on all the tokens, in their order.
     # Refs: https://github.com/openai/tiktoken/issues/60 & https://github.com/karpathy/minbpe/issues/11#issuecomment-1950805306
     merges = {}
     for token, rank in mergeableRanks.items():
         if len(token) == 1:
-            continue # Skip raw bytes
+            # Skip raw bytes
+            continue
         pair = tuple(bpe(mergeableRanks, token, maxRank=rank))
         assert len(pair) == 2
         # Recover the integer ranks of the pair
@@ -53,56 +53,56 @@ class GPT4Tokenizer(RegexTokenizer):
     def __init__(self):
         super().__init__(pattern=GPT4_SPLIT_PATTERN)
         # Get the official tokenizer and its merges
-        enc = tiktoken.getEncoding("cl100k_base")
+        try: 
+            enc = tiktoken.getEncoding("cl100k_base")
+        except Exception as e:
+            print(f"[Thoth]: Failed to get encoding with error: {e}")
+            return
         mergeableRanks = enc._mergeableRanks
-        # The merges are those of gpt4, but we have to recover them
+        # Recover GPT4 merges
         self.merges = recoverMerges(mergeableRanks)
         # Reconstruct the vocab from the merges
         vocab = {idx: bytes([idx]) for idx in range(256)}
         for (p0, p1), idx in self.merges.items():
             vocab[idx] = vocab[p0] + vocab[p1]
         self.vocab = vocab
-        # Now here is another tricky part.
-        # for some reason, the tokens corresponding to individual bytes
-        # are permuted in a different order. This is completely non-sensical
-        # and probably historical, but therefore we have to deal with it here.
+        # The tokens corresponding to individual bytes are permuted in a different order. 
         self.byteShuffle = {i: mergeableRanks[bytes([i])] for i in range(256)}
         self.inverseByteShuffle = {v: k for k, v in self.byteShuffle.items()}
-        # Finally register the special tokens
+        # Register the special tokens
         self.registerSpecialTokens(GPT4_SPECIAL_TOKENS)
 
     def encodeChunk(self, textBytes):
-        # Before we start processing bytes, we have to permute them
+        # Permute bytes before processing them
         textBytes = bytes(self.byteShuffle[b] for b in textBytes)
         ids = super().chunkify(textBytes)
         return ids
 
     def decode(self, ids):
-        # We have to un-permute the bytes before we decode
+        # Un-permute the bytes before decoding
         textBytes = b"".join(self.vocab[idx] for idx in ids)
         textBytes = bytes(self.inverseByteShuffle[b] for b in textBytes)
         text = textBytes.decode("utf-8", errors="replace")
         return text
 
     def saveVocab(self, vocabFile):
-        # just for visualization purposes let's output the GPT-4 tokens
-        # in the exact same format as the base class would.
-        # simple run as:
-        # from minbpe import GPT4Tokenizer; GPT4Tokenizer().save_vocab('gpt4.vocab')
         from .utils import renderToken
         # Build vocab being mindful of the byte shuffle
         vocab = {idx: bytes([self.inverseByteShuffle[idx]]) for idx in range(256)}
         for (p0, p1), idx in self.merges.items():
             vocab[idx] = vocab[p0] + vocab[p1]
-        # Now merge the shuffled bytes and write to file
+        # Merge the shuffled bytes and write to file
         invertedMerges = {idx: pair for pair, idx in self.merges.items()}
-        with open(vocabFile, "w", encoding="utf-8") as f:
-            for idx, token in vocab.items():
-                s = renderToken(token)
-                if idx in invertedMerges:
-                    idx0, idx1 = invertedMerges[idx]
-                    s0 = renderToken(vocab[idx0])
-                    s1 = renderToken(vocab[idx1])
-                    f.write(f"[{s0}][{s1}] -> [{s}] {idx}\n")
-                else:
-                    f.write(f"[{s}] {idx}\n")
+        try:
+            with open(vocabFile, "w", encoding="utf-8") as f:
+                for idx, token in vocab.items():
+                    s = renderToken(token)
+                    if idx in invertedMerges:
+                        idx0, idx1 = invertedMerges[idx]
+                        s0 = renderToken(vocab[idx0])
+                        s1 = renderToken(vocab[idx1])
+                        f.write(f"[{s0}][{s1}] -> [{s}] {idx}\n")
+                    else:
+                        f.write(f"[{s}] {idx}\n")
+        except Exception as e:
+            print(f"[Thoth]: An error occurred when writing to file: {e}")
