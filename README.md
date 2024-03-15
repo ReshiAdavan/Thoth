@@ -165,4 +165,4 @@ This architecture allows for efficient text encoding and decoding, making it sui
 - **Languages**: Python
 - **Libraries/Frameworks/Tools**: Regex, Tiktoken, Unicodedata
 - <ins>**Other**</ins>:
-  - **Concepts**: Tokenization, Embeddings, LLMs, GPT2.0 & GPT4.0, Llama2, Sentencepiece, Byte-pair encoding (BPE), ...
+  - **Concepts**: Tokenization, Embeddings, LLMs, GPT2.0 & GPT4.0, Llama2, Sentencepiece, Byte-pair encoding (BPE)
