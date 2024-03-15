@@ -39,20 +39,21 @@ class SentencePieceTokenizer:
 
         # Encode the text using the trained BPE model
         encoded = []
-        while codePoints:
-            # Find the longest sequence of code points that is in the vocabulary
-            for length in range(len(codePoints), 0, -1):
-                # print(length)
-                sequence = tuple(codePoints[:length])
+        i = 0
+        while i < len(codePoints):
+            # Start with the longest possible sequence
+            sequenceLength = min(len(codePoints) - i, max((len(k) if isinstance(k, tuple) else 1 for k in self.vocab.keys())))
+            while sequenceLength > 0:
+                sequence = tuple(codePoints[i:i+sequenceLength])
                 if sequence in self.vocab:
-                    # print("HEY")
                     encoded.append(self.vocab[sequence])
-                    codePoints = codePoints[length:]
+                    i += sequenceLength
                     break
+                sequenceLength -= 1
             else:
                 # If no sequence is found, use the first code point as a fallback
-                encoded.append(codePoints[0])
-                codePoints = codePoints[1:]
+                encoded.append(codePoints[i])
+                i += 1
 
         return encoded
 
@@ -112,13 +113,12 @@ if __name__ == "__main__":
     sampleText = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
     vocabSize = 276
 
-    print("\n" + sampleText + "\n")
+    # print("\n" + fileContent + "\n")
     SentencePieceTokenizerInstance.train(sampleText, vocabSize)
-    listOfEncodedIntegers = SentencePieceTokenizerInstance.encoder(sampleText)
+    listOfEncodedIntegers = SentencePieceTokenizerInstance.encoder(fileContent)
     # print(listOfEncodedIntegers)
     assert(len(listOfEncodedIntegers) > 0)
     decodedText = SentencePieceTokenizerInstance.decoder(listOfEncodedIntegers)
     print(decodedText)
     assert(decodedText != "")
-    assert(sampleText == decodedText) # text == decoder(encoder(text))
-
+    assert(fileContent == decodedText) # text == decoder(encoder(text))
