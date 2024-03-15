@@ -156,10 +156,6 @@ The `SentencePieceTokenizer` class is designed to perform tokenization tasks usi
 
 This architecture allows for efficient text encoding and decoding, making it suitable for applications involving large-scale language models, especially those that require handling of languages with complex morphologies.
 
-#### Llama2
-
-- TBD
-
 ### Topics
 
 - **Languages**: Python
