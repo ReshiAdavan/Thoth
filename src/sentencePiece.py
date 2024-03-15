@@ -1,12 +1,11 @@
 import unicodedata
-
 class SentencePieceTokenizer:
     def __init__(self) -> None:
             self.vocab = {} # Initialize the vocabulary
             self.tokenCounter = len(self.vocab) # Start token counter after initial vocabulary
 
-    """Description: Trains the tokenizer"""
     def train(self, text: str, vocabSize: int) -> None:
+        """Description: Trains the tokenizer"""
         # Convert the text to a list of Unicode code points
         codePoints = [ord(char) for char in text]
         # Initialize the vocabulary with the most common code points
@@ -32,8 +31,8 @@ class SentencePieceTokenizer:
         self.vocab = {token: self.vocab[token] for token in self.vocab if isinstance(token, int)}
         self.merges = {pair: token for token, pair in self.vocab.items() if isinstance(pair, tuple)}
 
-    """Description: Encodes input text to a compressed sequence of integers"""
     def encoder(self, text: str) -> list[int]:
+        """Description: Encodes input text to a compressed sequence of integers"""
         # Convert the text to a list of Unicode code points
         codePoints = [ord(char) for char in text]
 
@@ -57,8 +56,8 @@ class SentencePieceTokenizer:
 
         return encoded
 
-    """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
     def decoder(self, ids: list[int]) -> str:
+        """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
         # Decode the encoded sequence using the trained BPE model
         decoded = []
         for token in ids:

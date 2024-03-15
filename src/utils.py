@@ -4,8 +4,8 @@ import unicodedata
 ################### SHARED HELPER FUNCTIONS ###################
 ###############################################################
 
-"""Description: Returns most common tuples of encoded integers and their frequency of occurence"""
 def countCommonEncodedTuples(encodedInts: list[int], freqDict: dict[tuple[int, int], int] = None) -> None:
+    """Description: Returns most common tuples of encoded integers and their frequency of occurence"""
     freqDict = {} if freqDict is None else freqDict
     for i in range(len(encodedInts) - 1):
         pair = (encodedInts[i], encodedInts[i + 1])
@@ -13,8 +13,8 @@ def countCommonEncodedTuples(encodedInts: list[int], freqDict: dict[tuple[int, i
     # {} [K, V] -> [(encodedInt1, encodedInt2), frequency]
     return freqDict
 
-"""Description: Removes a tuple of integers from a list of integers"""
 def merge(pair, ids: list[int], idx: int) -> list[int]:
+    """Description: Removes a tuple of integers from a list of integers"""
     mergedIDs, i = [], 0 
 
     while i < len(ids):

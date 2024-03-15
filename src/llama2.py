@@ -2,16 +2,16 @@ class LlamaTokenizer:
     def __init__(self) -> None:
         pass
         
-    """Description: Trains the tokenizer"""
     def train(self, text: str, vocabSize: int) -> None:
+        """Description: Trains the tokenizer"""
         pass
 
-    """Description: Encodes input text to a compressed sequence of integers """
     def encoder(self, text: str) -> list[int]:
+        """Description: Encodes input text to a compressed sequence of integers """
         pass
 
-    """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
     def decoder(self, ids: list[int]) -> str:
+        """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
         pass
 
     ########################################################
