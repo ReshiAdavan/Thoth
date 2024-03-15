@@ -55,15 +55,6 @@ class BasicTokenizer:
     ################### HELPER FUNCTIONS ###################
     ########################################################
     
-    """Description: Returns most common tuples of encoded integers and their frequency of occurence"""
-    def countCommonEncodedTuples(encodedInts: list[int]) -> list[tuple]:
-        freqDict = {}
-        for i in range(len(encodedInts) - 1):
-            pair = (encodedInts[i], encodedInts[i + 1])
-            freqDict[pair] = freqDict.get(pair, 0) + 1 
-        # {} [K, V] -> [(encodedInt1, encodedInt2), frequency]
-        return freqDict
-
     """Description: Replaces the most common tuple with a new integer token (created by the tokenizer)"""
     def mintToken(self, dictTuples: list[tuple], ids: list[int], idx: int) -> None:
         _, mostCommonPairOfInts  = dictTuples.pop(0)

@@ -7,7 +7,7 @@ class LlamaTokenizer:
         pass
 
     """Description: Encodes input text to a compressed sequence of integers """
-    def encoder(self, text) -> list[int]:
+    def encoder(self, text: str) -> list[int]:
         pass
 
     """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """

@@ -1,22 +1,108 @@
+import unicodedata
+
 class SentencePieceTokenizer:
     def __init__(self) -> None:
-        pass
-        
+            self.vocab = {} # Initialize the vocabulary
+            self.tokenCounter = len(self.vocab) # Start token counter after initial vocabulary
+
     """Description: Trains the tokenizer"""
     def train(self, text: str, vocabSize: int) -> None:
-        pass
+        # Convert the text to a list of Unicode code points
+        codePoints = [ord(char) for char in text]
+        # Initialize the vocabulary with the most common code points
+        self.vocab = {codePoint: chr(codePoint) for codePoint in set(codePoints)}
+        # Initialize the BPE merges
+        self.merges = {}
+        numOfMerges = vocabSize - 256
 
-    """Description: Encodes input text to a compressed sequence of integers """
-    def encoder(self, text) -> list[int]:
-        pass
+        # Perform BPE training
+        for _ in range(numOfMerges):
+            # Count the frequency of each pair of code points
+            pairCounts = self.countPairFrequencies(codePoints)
+            # Find the most frequent pair of code points
+            mostFrequentPair = max(pairCounts, key=pairCounts.get)
+            # Merge the most frequent pair into a new token
+            newToken = self.generateNewToken()
+            # Update the vocabulary and the list of code points
+            self.vocab[newToken] = mostFrequentPair
+            codePoints = self.mergeItemsReplace(codePoints, mostFrequentPair, newToken)
+            # print(codePoints)
+
+        # Store the final vocabulary and merges
+        self.vocab = {token: self.vocab[token] for token in self.vocab if isinstance(token, int)}
+        self.merges = {pair: token for token, pair in self.vocab.items() if isinstance(pair, tuple)}
+
+    """Description: Encodes input text to a compressed sequence of integers"""
+    def encoder(self, text: str) -> list[int]:
+        # Convert the text to a list of Unicode code points
+        codePoints = [ord(char) for char in text]
+
+        # Encode the text using the trained BPE model
+        encoded = []
+        while codePoints:
+            # Find the longest sequence of code points that is in the vocabulary
+            for length in range(len(codePoints), 0, -1):
+                # print(length)
+                sequence = tuple(codePoints[:length])
+                if sequence in self.vocab:
+                    # print("HEY")
+                    encoded.append(self.vocab[sequence])
+                    codePoints = codePoints[length:]
+                    break
+            else:
+                # If no sequence is found, use the first code point as a fallback
+                encoded.append(codePoints[0])
+                codePoints = codePoints[1:]
+
+        return encoded
 
     """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
     def decoder(self, ids: list[int]) -> str:
-        pass
+        # Decode the encoded sequence using the trained BPE model
+        decoded = []
+        for token in ids:
+            # Retrieve the sequence of code points for the token
+            sequence = self.vocab.get(token, (token,))
+            # Ensure that the sequence is a tuple of integers
+            if isinstance(sequence, str):
+                sequence = tuple(ord(char) for char in sequence)
+            # Convert the sequence of code points back to a string
+            decoded.extend(sequence)
+        return ''.join(chr(codePoint) for codePoint in decoded)
 
     ########################################################
     ################### HELPER FUNCTIONS ###################
     ########################################################
+
+    def countPairFrequencies(self, codePoints):
+        """Counts the frequency of each pair of consecutive Unicode code points."""
+        pairCounts = {}
+        for i in range(len(codePoints) - 1):
+            pair = (codePoints[i], codePoints[i + 1])
+            if pair in pairCounts:
+                pairCounts[pair] += 1
+            else:
+                pairCounts[pair] = 1
+        return pairCounts
+
+    def mergeItemsReplace(self, items, pair, newItem):
+        """Merges a pair of consecutive items in a list with a new item."""
+        mergedItems = []
+        i = 0
+        while i < len(items):
+            if i < len(items) - 1 and items[i:i+2] == pair:
+                mergedItems.append(newItem)
+                i += 2
+            else:
+                mergedItems.append(items[i])
+                i += 1
+        return mergedItems
+    
+    def generateNewToken(self):
+        """Generates a new token for a merged pair of Unicode code points."""
+        newToken = self.tokenCounter
+        self.tokenCounter += 1
+        return newToken
 
 if __name__ == "__main__":
     SentencePieceTokenizerInstance = SentencePieceTokenizer()
@@ -28,9 +114,11 @@ if __name__ == "__main__":
 
     print("\n" + sampleText + "\n")
     SentencePieceTokenizerInstance.train(sampleText, vocabSize)
-    listOfEncodedIntegers = SentencePieceTokenizerInstance.encoder(fileContent)
+    listOfEncodedIntegers = SentencePieceTokenizerInstance.encoder(sampleText)
+    # print(listOfEncodedIntegers)
     assert(len(listOfEncodedIntegers) > 0)
     decodedText = SentencePieceTokenizerInstance.decoder(listOfEncodedIntegers)
+    print(decodedText)
     assert(decodedText != "")
-    assert(fileContent == decodedText) # text == decoder(encoder(text))
+    assert(sampleText == decodedText) # text == decoder(encoder(text))
 
