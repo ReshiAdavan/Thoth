@@ -4,8 +4,8 @@ class BasicTokenizer:
     def __init__(self) -> None:
         pass
         
-    """Description: Trains the tokenizer"""
     def train(self, text: str, vocabSize: int) -> None:
+        """Description: Trains the tokenizer"""
         assert(vocabSize >= 256)
         if len(text) == 0:
             raise ValueError("[Thoth => train]: String empty. Nothing to train on.")
@@ -22,8 +22,8 @@ class BasicTokenizer:
         self.minter(sortedCommonTuples, encodedIntegers, 256, vocabSize)
         print("[Thoth => train]: Training complete.")
 
-    """Description: Encodes input text to a compressed sequence of integers """
     def encoder(self, text: str) -> list[int]:
+        """Description: Encodes input text to a compressed sequence of integers """
         if len(text) == 0:
             raise ValueError("[Thoth => encoder]: String empty. Nothing to encode.")
         
@@ -41,8 +41,8 @@ class BasicTokenizer:
         print("[Thoth => encoder]: Encoding Complete...")
         return encodedIntegers
 
-    """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
     def decoder(self, ids: list[int]) -> str:
+        """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
         if len(ids) == 0:
             raise ValueError("[Thoth => decoder]: No IDs. Nothing to decode.")
         
@@ -55,17 +55,8 @@ class BasicTokenizer:
     ################### HELPER FUNCTIONS ###################
     ########################################################
     
-    """Description: Returns most common tuples of encoded integers and their frequency of occurence"""
-    def countCommonEncodedTuples(encodedInts: list[int]) -> list[tuple]:
-        freqDict = {}
-        for i in range(len(encodedInts) - 1):
-            pair = (encodedInts[i], encodedInts[i + 1])
-            freqDict[pair] = freqDict.get(pair, 0) + 1 
-        # {} [K, V] -> [(encodedInt1, encodedInt2), frequency]
-        return freqDict
-
-    """Description: Replaces the most common tuple with a new integer token (created by the tokenizer)"""
     def mintToken(self, dictTuples: list[tuple], ids: list[int], idx: int) -> None:
+        """Description: Replaces the most common tuple with a new integer token (created by the tokenizer)"""
         _, mostCommonPairOfInts  = dictTuples.pop(0)
         print(f"[Thoth => minter]: Minting {mostCommonPairOfInts} into a new token {idx}")
         self.mints[mostCommonPairOfInts] = idx
@@ -77,8 +68,8 @@ class BasicTokenizer:
                 i -= 1
             i += 1
     
-    """Description: Iteratively replaces common tuples with new integer tokens (minting)"""
     def minter(self, sortedDictTuples, idsList: list[int], start_index: int, end_index):
+        """Description: Iteratively replaces common tuples with new integer tokens (minting)"""
         while (start_index < end_index): # tuneable parameter
             self.mintToken(sortedDictTuples, idsList, start_index)
             start_index += 1
