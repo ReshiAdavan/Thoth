@@ -129,15 +129,36 @@ This architecture is specifically designed for tokenization tasks with GPT-4, en
 
 #### SentencePiece
 
-- TBD
+The `SentencePieceTokenizer` class is designed to perform tokenization tasks using the SentencePiece algorithm, which is a subword tokenization method that is particularly effective for languages with rich morphology. This class encapsulates the process of training a tokenizer on a given text dataset, encoding input text into a compressed sequence of integers, and decoding the encoded sequence back into human-readable text.
 
-#### Llama2
+##### Class Definition
 
-- TBD
+- **SentencePieceTokenizer**: The main class that encapsulates the tokenization process using the SentencePiece algorithm.
+
+##### Methods
+
+- **`__init__`**: Initializes the tokenizer instance, setting up the initial vocabulary and token counter.
+- **`train`**: Trains the tokenizer on a given text dataset by identifying the most frequent pairs of Unicode code points and merging them into new tokens, expanding the vocabulary to the specified size.
+- **`encoder`**: Encodes input text into a compressed sequence of integers by breaking down the text into the most frequent subword units identified during training.
+- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text by reversing the encoding process.
+
+##### Key Components
+
+- **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding Unicode code points or merged pairs of code points.
+- **Token Counter (`self.tokenCounter`)**: A counter used to assign unique identifiers to new tokens generated during the training process.
+
+##### Usage
+
+1. Initialize a `SentencePieceTokenizer` instance.
+2. Train the tokenizer on a text dataset using the `train` method.
+3. Encode text into a compressed sequence of integers using the `encoder` method.
+4. Decode the encoded sequence back into human-readable text using the `decoder` method.
+
+This architecture allows for efficient text encoding and decoding, making it suitable for applications involving large-scale language models, especially those that require handling of languages with complex morphologies.
 
 ### Topics
 
 - **Languages**: Python
 - **Libraries/Frameworks/Tools**: Regex, Tiktoken, Unicodedata
 - <ins>**Other**</ins>:
-  - **Concepts**: Tokenization, Embeddings, LLMs, GPT2.0 & GPT4.0, Llama2, Sentencepiece, Byte-pair encoding (BPE), ...
+  - **Concepts**: Tokenization, Embeddings, LLMs, GPT2.0 & GPT4.0, Llama2, Sentencepiece, Byte-pair encoding (BPE)
