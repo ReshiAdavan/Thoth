@@ -13,9 +13,9 @@ class RegexTokenizer:
         if len(text) == 0:
             raise ValueError("[Thoth => train]: String empty. Nothing to train on.")
         
-        idx = 256
         print("[Thoth => train]: Training...")
 
+        idx = 256
         numOfMerges = vocabSize - 256
         self.compiledPattern = re.compile(GPT4_SPLIT_PATTERN)
         tokens = re.findall(self.compiledPattern, text)
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     sampleText = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
     vocabSize = 276
 
-    print("\n" + sampleText + "\n")
+    # print("\n" + sampleText + "\n")
     RegexTokenizerInstance.train(sampleText, vocabSize)
     listOfEncodedIntegers = RegexTokenizerInstance.encoder(fileContent)
     assert(len(listOfEncodedIntegers) > 0)
