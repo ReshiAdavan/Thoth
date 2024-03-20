@@ -41,6 +41,9 @@ class SentencePieceTokenizer:
     def encoder(self, text: str) -> list[int]:
         """Description: Encodes input text to a compressed sequence of integers"""
 
+        if len(text) == 0:
+            raise ValueError("[Thoth => encoder]: String empty. Nothing to encode.")
+
         print("[Thoth => encoder]: Encoding...")
         # Convert the text to a list of Unicode code points
         codePoints = [ord(char) for char in text]
@@ -67,8 +70,11 @@ class SentencePieceTokenizer:
         return encoded
 
     def decoder(self, ids: list[int]) -> str:
-        """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
+        """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text"""
 
+        if len(ids) == 0:
+            raise ValueError("[Thoth => decoder]: No IDs. Nothing to decode.")
+    
         print("[Thoth => decoder]: Decoding...")
 
         # Decode the encoded sequence using the trained BPE model
@@ -90,7 +96,7 @@ class SentencePieceTokenizer:
     ########################################################
 
     def countPairFrequencies(self, codePoints):
-        """Counts the frequency of each pair of consecutive Unicode code points."""
+        """Description: Counts the frequency of each pair of consecutive Unicode code points."""
         pairCounts = {}
         for i in range(len(codePoints) - 1):
             pair = (codePoints[i], codePoints[i + 1])
@@ -101,7 +107,7 @@ class SentencePieceTokenizer:
         return pairCounts
 
     def mergeItemsReplace(self, items, pair, newItem):
-        """Merges a pair of consecutive items in a list with a new item."""
+        """Description: Merges a pair of consecutive items in a list with a new item."""
         mergedItems = []
         i = 0
         while i < len(items):
@@ -114,13 +120,13 @@ class SentencePieceTokenizer:
         return mergedItems
     
     def generateNewToken(self):
-        """Generates a new token for a merged pair of Unicode code points."""
+        """Description: Generates a new token for a merged pair of Unicode code points."""
         newToken = self.tokenCounter
         self.tokenCounter += 1
         return newToken
     
     def mostCommonCodepoints(self, codepoints, topN = 256):
-        """Returns a sorted dictionary of the most common codepoints"""
+        """Description: Returns a sorted dictionary of the most common codepoints"""
         from collections import Counter
         # Count occurrences of each codepoint
         counts = Counter(codepoints)

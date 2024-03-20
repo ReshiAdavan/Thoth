@@ -9,6 +9,7 @@ class RegexTokenizer:
         pass
 
     def train(self, text: str, vocabSize: int) -> None:
+        """Description: Trains the tokenizer"""
         assert (vocabSize >= 256)
         if len(text) == 0:
             raise ValueError("[Thoth => train]: String empty. Nothing to train on.")
@@ -37,6 +38,10 @@ class RegexTokenizer:
         print("[Thoth => train]: Training complete.")
 
     def encoder(self, text: str) -> list[int]:
+        """Description: Encodes input text to a compressed sequence of integers"""
+        if len(text) == 0:
+            raise ValueError("[Thoth => encoder]: String empty. Nothing to encode.")
+
         print("[Thoth => encoder]: Encoding...")
         tokens = re.findall(self.compiledPattern, text)
         encodedIntegers = []
@@ -48,6 +53,10 @@ class RegexTokenizer:
         return encodedIntegers
     
     def decoder(self, encodedIntegers: list[int]) -> str:
+        """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text"""
+        if len(encodedIntegers) == 0:
+            raise ValueError("[Thoth => decoder]: No IDs. Nothing to decode.")
+
         print("[Thoth => decoder]: Decoding...")
         bytes = []
         for idx in encodedIntegers:
@@ -64,6 +73,7 @@ class RegexTokenizer:
     ########################################################
 
     def chunkify(self, joinedBytes):
+        """Description: Processes a sequence of bytes, merging them based on common patterns to form a compressed sequence of IDs."""
         ids = list(joinedBytes)
         while len(ids) >= 2:
             commonTuples = util.countCommonEncodedTuples(ids)
