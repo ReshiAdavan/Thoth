@@ -1,4 +1,3 @@
-import unicodedata
 class SentencePieceTokenizer:
     def __init__(self) -> None:
             self.vocab = {} # Initialize the vocabulary
