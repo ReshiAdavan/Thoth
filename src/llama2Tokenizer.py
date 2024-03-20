@@ -1,4 +1,6 @@
-class SentencePieceTokenizer:
+# The Llama-2 Tokenizer uses sentencepiece, which is what is adopted here
+
+class Llama2Tokenizer:
     def __init__(self) -> None:
             self.vocab = {} # Initialize the vocabulary
             self.tokenCounter = len(self.vocab) # Start token counter after initial vocabulary
@@ -139,7 +141,7 @@ class SentencePieceTokenizer:
         return topCodepointsDict
 
 if __name__ == "__main__":
-    SentencePieceTokenizerInstance = SentencePieceTokenizer()
+    Llama2TokenizerInstance = Llama2Tokenizer()
     filePath = "data/taylorSwift.txt"
     with open(filePath, 'r', encoding='utf-8') as file:
         fileContent = file.read()
@@ -147,9 +149,9 @@ if __name__ == "__main__":
     vocabSize = 276
 
     # print("\n" + sampleText + "\n")
-    SentencePieceTokenizerInstance.train(sampleText, vocabSize)
-    listOfEncodedIntegers = SentencePieceTokenizerInstance.encoder(fileContent)
+    Llama2TokenizerInstance.train(sampleText, vocabSize)
+    listOfEncodedIntegers = Llama2TokenizerInstance.encoder(fileContent)
     assert(len(listOfEncodedIntegers) > 0)
-    decodedText = SentencePieceTokenizerInstance.decoder(listOfEncodedIntegers)
+    decodedText = Llama2TokenizerInstance.decoder(listOfEncodedIntegers)
     assert(decodedText != "")
     assert(fileContent == decodedText) # text == decoder(encoder(text))
