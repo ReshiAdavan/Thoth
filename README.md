@@ -127,13 +127,13 @@ The `GPT4Tokenizer` class in `gpt4Tokenizer.py` is designed to perform tokenizat
 
 This architecture is specifically designed for tokenization tasks with GPT-4, ensuring compatibility and efficiency in text processing for this model.
 
-#### SentencePiece
+#### Llama2Tokenizer
 
-The `SentencePieceTokenizer` class is designed to perform tokenization tasks using the SentencePiece algorithm, which is a subword tokenization method that is particularly effective for languages with rich morphology. This class encapsulates the process of training a tokenizer on a given text dataset, encoding input text into a compressed sequence of integers, and decoding the encoded sequence back into human-readable text.
+The `Llama2Tokenizer` class is designed to perform tokenization tasks using the SentencePiece algorithm, which is a subword tokenization method that is particularly effective for languages with rich morphology. This class encapsulates the process of training a tokenizer on a given text dataset, encoding input text into a compressed sequence of integers, and decoding the encoded sequence back into human-readable text.
 
 ##### Class Definition
 
-- **SentencePieceTokenizer**: The main class that encapsulates the tokenization process using the SentencePiece algorithm.
+- **Llama2Tokenizer**: The main class that encapsulates the tokenization process using the SentencePiece algorithm.
 
 ##### Methods
 
@@ -149,7 +149,7 @@ The `SentencePieceTokenizer` class is designed to perform tokenization tasks usi
 
 ##### Usage
 
-1. Initialize a `SentencePieceTokenizer` instance.
+1. Initialize a `Llama2Tokenizer` instance.
 2. Train the tokenizer on a text dataset using the `train` method.
 3. Encode text into a compressed sequence of integers using the `encoder` method.
 4. Decode the encoded sequence back into human-readable text using the `decoder` method.
