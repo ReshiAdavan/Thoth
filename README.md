@@ -4,7 +4,7 @@ Named after the Egyptian god of the moon, of reckoning, of learning, and of writ
 
 ### Inspiration
 
-I just felt like it. It seems like the bottleneck of LLMs at the moment, so it would be good to research and develop one, understand up-to-date architectures, and produce better open source implementations in hopes to provide AI at NLP.
+I just felt like it. It seems like the bottleneck of LLMs at the moment, so it would be good to research and develop one, understand up-to-date architectures, and produce better open source implementations in hopes to provide AI in NLP.
 
 ### How to Use
 
