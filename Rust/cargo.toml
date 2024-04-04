@@ -1,0 +1,6 @@
+[package]
+name = "your_package_name"
+version = "0.1.0"
+edition = "2021"  # Use the latest stable edition
+
+[dependencies]
