@@ -1,6 +1,6 @@
 [package]
-name = "your_package_name"
+name = "Thoth"
 version = "0.1.0"
-edition = "2021"  # Use the latest stable edition
+edition = "2021"
 
 [dependencies]
