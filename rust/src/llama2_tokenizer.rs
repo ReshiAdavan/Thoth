@@ -123,20 +123,47 @@ impl Llama2Tokenizer {
     /////////////////// HELPER FUNCTIONS ///////////////////
     ////////////////////////////////////////////////////////
 
-    fn count_pair_frequencies(&mut self, code_points: Vec<u32>) -> IndexMap<(usize, usize), usize> {
-
+    fn count_pair_frequencies(code_points: Vec<u32>) -> HashMap<(usize, usize), usize> {
+        let mut pair_counts = HashMap::new();
+        for window in code_points.windows(2) {
+            if let [a, b] = window {
+                *pair_counts.entry((*a, *b)).or_insert(0) += 1;
+            }
+        }
+        pair_counts
     }
-        
 
-    fn merge_items_replace(&mut self, items: Vec<usize>, pair: (usize, usize), new_item: usize) {
-
+    fn merge_items_replace(items: Vec<usize>, pair: (usize, usize), new_item: usize) -> Vec<usize> {
+        let mut merged_items = Vec::new();
+        let mut i = 0;
+        while i < items.len() {
+            if i + 1 < items.len() && (items[i], items[i + 1]) == pair {
+                merged_items.push(new_item);
+                i += 2;
+            } else {
+                merged_items.push(items[i]);
+                i += 1;
+            }
+        }
+        merged_items
     }
     
-    fn generate_new_token(&mut self) {
-
+    fn generate_new_token(&mut self) -> usize {
+        let new_token = self.token_counter;
+        self.token_counter += 1;
+        new_token
     }
 
-    fn most_common_codepoints(&mut self, code_points: Vec<u32>, top_n: usize) {
-
+    fn most_common_codepoints(codepoints: Vec<usize>, top_n: usize) -> HashMap<usize, char> {
+        let mut counts = HashMap::new();
+        for &codepoint in &codepoints {
+            *counts.entry(codepoint).or_insert(0) += 1;
+        }
+        
+        let mut sorted_counts: Vec<_> = counts.iter().collect();
+        sorted_counts.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        let top_codepoints = sorted_counts.into_iter().take(top_n);
+        top_codepoints.map(|(&codepoint, _)| (codepoint, std::char::from_u32(codepoint).unwrap()))
+            .collect()
     }
 }
