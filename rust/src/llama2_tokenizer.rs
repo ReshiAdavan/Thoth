@@ -114,7 +114,7 @@ impl Llama2Tokenizer {
 
         for {
             ...
-        }
+        } 
 
         print("[Thoth => decoder]: Decoding Complete...");
     }
