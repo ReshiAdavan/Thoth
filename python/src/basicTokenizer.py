@@ -13,6 +13,7 @@ class BasicTokenizer:
         print("[Thoth => train]: Training...")
         self.mints = {} # (int, int) -> int
         self.vocab = {idx: bytes([idx]) for idx in range(256)}
+        print(self.vocab)
         
         tokens = text.encode('utf-8')
         encodedIntegers = [byte for byte in tokens]
@@ -68,11 +69,11 @@ class BasicTokenizer:
                 i -= 1
             i += 1
     
-    def minter(self, sortedDictTuples, idsList: list[int], start_index: int, end_index):
+    def minter(self, sortedDictTuples, idsList: list[int], startIndex: int, endIndex: int):
         """Description: Iteratively replaces common tuples with new integer tokens (minting)"""
-        while (start_index < end_index): # tuneable parameter
-            self.mintToken(sortedDictTuples, idsList, start_index)
-            start_index += 1
+        while (startIndex < endIndex): # tuneable parameter
+            self.mintToken(sortedDictTuples, idsList, startIndex)
+            startIndex += 1
 
 if __name__ == "__main__":
     BasicTokenizerInstance = BasicTokenizer()

@@ -1,6 +1,7 @@
 [package]
-name = "Thoth"
+name = "thoth"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+indexmap = "1.7.0"
