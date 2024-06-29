@@ -8,136 +8,78 @@ I just felt like it. It seems like the bottleneck of LLMs at the moment, so it w
 
 ### How to Use
 
-Run each of the python files.
+#### Python
 
-`python -u <directory of python file>`
+Navigate to the `python/` directory and run the `Makefile`.
 
-Example: `python -u "c:\Users\...\gpt4Tokenizer.py"`
+Example: `cd python/ ; make`
 
-### Architecture
+And you can change which tokenizer you want to run by configuring the `Makefile`
+
+#### Rust
+
+Navigate to the `rust` directory and run `cargo build` and then `cargo run`
+
+Example: `cd rust/ ; cargo build ; cargo run`
+
+And you can change which tokenizer you want to run by specifying in `main.rs`
+
+### Architecture (Python)
 
 Differs per tokenizer.
 
 #### BasicTokenizer
 
-The `BasicTokenizer` class in `basicTokenizer.py` is designed to perform tokenization tasks, which are crucial for preparing text data for processing by large-scale language models. The architecture of `BasicTokenizer` is as follows:
-
-##### Class Definition
-
-- **BasicTokenizer**: The main class that encapsulates the tokenization process.
+This tokenizer designed to perform tokenization by partitioning input text data by collection of bytes. It does not particularly consider the type of text data it analyzes.
 
 ##### Methods
 
-- **`__init__`**: Initializes the tokenizer instance.
-
-- **`train`**: Trains the tokenizer on a given text dataset. It asserts that the vocabulary size is at least 256. It initializes the vocabulary and trains the tokenizer by identifying common byte sequences and replacing them with new tokens.
-
+- **`train`**: Trains the tokenizer on a given text dataset. Initializes vocabulary and trains by identifying common byte sequences and replacing them with new tokens.
 - **`encoder`**: Encodes input text into a compressed sequence of integers. It processes the text by encoding it into bytes, identifying common byte sequences, and replacing them with new tokens.
-
 - **`decoder`**: Decodes the encoded sequence of integers back into human-readable text. It reverses the encoding process by replacing tokens with their corresponding byte sequences.
-
-- **`countCommonEncodedTuples`**: Helper function that counts the frequency of common byte sequences in the encoded text.
-
-- **`mintToken`**: Helper function that replaces the most common byte sequence with a new token.
-
-- **`minter`**: Helper function that iteratively replaces common byte sequences with new tokens until the desired vocabulary size is reached.
 
 ##### Key Components
 
 - **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding byte sequences.
-
 - **Minters (`self.mints`)**: A dictionary that maps byte sequences to their corresponding integer tokens.
-
-##### Usage
-
-1. Initialize a `BasicTokenizer` instance.
-2. Train the tokenizer on a text dataset using the `train` method.
-3. Encode text into a compressed sequence of integers using the `encoder` method.
-4. Decode the encoded sequence back into human-readable text using the `decoder` method.
-
-This architecture allows for efficient text encoding and decoding, making it suitable for applications involving large-scale language models.
 
 #### RegexTokenizer
 
-The `RegexTokenizer` class in `regexTokenizer.py` is designed to perform tokenization tasks using regular expressions, providing a flexible and powerful method for text processing. The architecture of `RegexTokenizer` is as follows:
-
-##### Class Definition
-
-- **RegexTokenizer**: The main class that encapsulates the tokenization process using regular expressions.
+This tokenizer is designed to perform tokenization tasks using regular expressions. RegeX at least can be made to have some general understanding of the relationships within text data.
 
 ##### Methods
 
-- **`__init__`**: Initializes the tokenizer instance.
-
-- **`train`**: Trains the tokenizer on a given text dataset. It asserts that the vocabulary size is at least 256. It initializes the vocabulary and trains the tokenizer by identifying common byte sequences and replacing them with new tokens.
-
-- **`encoder`**: Encodes input text into a compressed sequence of integers. It processes the text by encoding it into bytes, identifying common byte sequences, and replacing them with new tokens.
-
-- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text. It reverses the encoding process by replacing tokens with their corresponding byte sequences.
-
-- **`chunkify`**: Helper function that processes the encoded bytes to identify common byte sequences and replaces them with new tokens.
+- **`train`**: Trains the tokenizer on a given text dataset. Initializes the vocabulary and trains the tokenizer by identifying sequences through RegeX experessions and replaces them with new tokens.
+- **`encoder`**: Encodes input text into a compressed sequence of integers. It processes the through RegeX, identifying common byte sequences, and replacing them with new tokens.
+- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text. It reverses the encoding process by replacing tokens with their corresponding representations.
 
 ##### Key Components
 
-- **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding byte sequences.
-
-- **Minters (`self.mints`)**: A dictionary that maps byte sequences to their corresponding integer tokens.
-
-##### Usage
-
-1. Initialize a `RegexTokenizer` instance.
-2. Train the tokenizer on a text dataset using the `train` method.
-3. Encode text into a compressed sequence of integers using the `encoder` method.
-4. Decode the encoded sequence back into human-readable text using the `decoder` method.
-
-This architecture allows for efficient text encoding and decoding using regular expressions, making it suitable for applications involving large-scale language models.
+- **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding sequences.
+- **Minters (`self.mints`)**: A dictionary that maps sequences to their corresponding integer tokens.
 
 #### GPT4Tokenizer
 
-The `GPT4Tokenizer` class in `gpt4Tokenizer.py` is designed to perform tokenization tasks specifically tailored for models like GPT-4, ensuring compatibility and efficiency in text processing. The architecture of `GPT4Tokenizer` is as follows:
-
-##### Class Definition
-
-- **GPT4Tokenizer**: The main class that encapsulates the tokenization process, optimized for GPT-4's requirements.
+This tokenizer is designed to perform tokenization tasks specifically tailored for models like GPT-4, ensuring compatibility and efficiency in text processing.
 
 ##### Methods
 
-- **`__init__`**: Initializes the tokenizer instance, setting up the tokenization rules and vocabulary.
-
 - **`tokenize`**: Tokenizes input text according to GPT-4's tokenization rules. It processes the text by applying the tokenization logic, which may include splitting text into subwords, handling special characters, and more.
-
 - **`detokenize`**: Converts a sequence of tokens back into human-readable text. It reverses the tokenization process, reconstructing the original text from the tokenized sequence.
-
 - **`encode`**: Encodes input text into a sequence of integers, representing the tokens in a format that GPT-4 can process.
-
 - **`decode`**: Decodes a sequence of integers back into human-readable text, reversing the encoding process.
 
 ##### Key Components
 
 - **Vocabulary (`self.vocab`)**: A dictionary that maps tokens to their corresponding integer IDs.
-
 - **Tokenization Rules**: A set of rules for splitting text into tokens, handling special characters, and more, tailored to GPT-4's requirements.
-
-##### Usage
-
-1. Initialize a `GPT4Tokenizer` instance.
-2. Tokenize text using the `tokenize` method, which applies GPT-4's tokenization rules to the input text and returns a list of tokens.
-3. Encode text into a sequence of integers using the `encode` method, preparing the text for input into GPT-4.
-4. Decode the encoded sequence back into human-readable text using the `decode` method.
-
-This architecture is specifically designed for tokenization tasks with GPT-4, ensuring compatibility and efficiency in text processing for this model.
 
 #### Llama2Tokenizer
 
-The `Llama2Tokenizer` class is designed to perform tokenization tasks using the SentencePiece algorithm, which is a subword tokenization method that is particularly effective for languages with rich morphology. This class encapsulates the process of training a tokenizer on a given text dataset, encoding input text into a compressed sequence of integers, and decoding the encoded sequence back into human-readable text.
-
-##### Class Definition
-
-- **Llama2Tokenizer**: The main class that encapsulates the tokenization process using the SentencePiece algorithm.
+This tokenizer is designed to perform tokenization tasks using the SentencePiece algorithm, which is a subword tokenization method that is particularly effective for languages with rich morphology. This class encapsulates the process of training a tokenizer on a given text dataset, encoding input text into a compressed sequence of integers, and decoding the encoded sequence back into human-readable text.
 
 ##### Methods
 
-- **`__init__`**: Initializes the tokenizer instance, setting up the initial vocabulary and token counter.
 - **`train`**: Trains the tokenizer on a given text dataset by identifying the most frequent pairs of Unicode code points and merging them into new tokens, expanding the vocabulary to the specified size.
 - **`encoder`**: Encodes input text into a compressed sequence of integers by breaking down the text into the most frequent subword units identified during training.
 - **`decoder`**: Decodes the encoded sequence of integers back into human-readable text by reversing the encoding process.
@@ -147,18 +89,32 @@ The `Llama2Tokenizer` class is designed to perform tokenization tasks using the 
 - **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding Unicode code points or merged pairs of code points.
 - **Token Counter (`self.tokenCounter`)**: A counter used to assign unique identifiers to new tokens generated during the training process.
 
-##### Usage
+### Architecture (Rust)
 
-1. Initialize a `Llama2Tokenizer` instance.
-2. Train the tokenizer on a text dataset using the `train` method.
-3. Encode text into a compressed sequence of integers using the `encoder` method.
-4. Decode the encoded sequence back into human-readable text using the `decoder` method.
+Differs per tokenizer.
 
-This architecture allows for efficient text encoding and decoding, making it suitable for applications involving large-scale language models, especially those that require handling of languages with complex morphologies.
+#### BasicTokenizer
+
+This tokenizer is designed to perform tokenization by partitioning input text data into collections of bytes and encoding them into sequences of integer tokens. It does not particularly consider the type of text data it analyzes.
+
+##### Methods
+
+- **`train`**: Trains the tokenizer on a given text dataset. Initializes the vocabulary and identifies common byte sequences, replacing them with new tokens until the desired vocabulary size is reached.
+- **`encoder`**: Encodes input text into a compressed sequence of integers. It processes the text by converting it to bytes, identifying common byte sequences, and replacing them with new tokens based on the previously trained vocabulary.
+- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text. It reverses the encoding process by replacing tokens with their corresponding byte sequences from the vocabulary.
+
+##### Key Components
+
+- **Vocabulary (`self.vocab`)**: An index map that maps integer tokens to their corresponding byte sequences.
+- **Minters (`self.mints`)**: A hashmap that maps byte sequence pairs to their corresponding integer tokens.
+
+#### Llama2Tokenizer
+
+WIP
 
 ### Topics
 
-- **Languages**: Python
+- **Languages**: Python, Rust
 - **Libraries/Frameworks/Tools**: Regex, Tiktoken, Unicodedata
 - <ins>**Other**</ins>:
   - **Concepts**: Tokenization, Embeddings, LLMs, GPT2.0 & GPT4.0, Llama2, Sentencepiece, Byte-pair encoding (BPE)
