@@ -11,7 +11,7 @@ pub struct BasicTokenizer {
 impl BasicTokenizer {
     pub fn new() -> BasicTokenizer {
         let mints = IndexMap::new();
-        let vocab = HashMap::new();
+        let vocab: HashMap<usize, Vec<usize>> = HashMap::new();
         BasicTokenizer { mints, vocab }
     }
 
