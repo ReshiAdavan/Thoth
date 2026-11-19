@@ -67,13 +67,11 @@ test("train, export, import and reject malformed models", async ({ page }) => {
     ),
   });
   await expect(page.locator("#merges")).toContainText("Imported 2");
-  await page
-    .locator("#import")
-    .setInputFiles({
-      name: "bad.json",
-      mimeType: "application/json",
-      buffer: Buffer.from("{}"),
-    });
+  await page.locator("#import").setInputFiles({
+    name: "bad.json",
+    mimeType: "application/json",
+    buffer: Buffer.from("{}"),
+  });
   await expect(page.locator("#status")).toContainText("Expected a version 1");
 });
 test("BPE deterministic and lossless", () => {
@@ -87,4 +85,14 @@ test("BPE deterministic and lossless", () => {
       new Uint8Array(t.encode(text).flatMap((i) => t.vocab[i])),
     ),
   ).toBe(text);
+});
+
+test("special-token-looking text remains ordinary text", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#text").fill("<|endoftext|>");
+  await expect(page.locator("#count")).toHaveText(
+    String(getEncoding("cl100k_base").encode("<|endoftext|>", [], []).length),
+  );
+  await page.locator("#compare").check();
+  await expect(page.locator(".result")).toHaveCount(4);
 });

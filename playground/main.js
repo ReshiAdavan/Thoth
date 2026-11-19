@@ -23,6 +23,7 @@ function tokenizer(name) {
   return name === "custom" ? custom : (cache[name] ??= getEncoding(name));
 }
 function update() {
+  clearTimeout(timer);
   clearInterval(playTimer);
   $("detail").textContent =
     "Select a token to inspect its ID, bytes and position.";
@@ -34,7 +35,7 @@ function update() {
       );
     let name = $("encoding").value,
       t = tokenizer(name);
-    ids = t.encode(text);
+    ids = t.encode(text, [], []);
     $("count").textContent = ids.length;
     $("tokens").replaceChildren();
     $("training").hidden = name !== "custom";
@@ -74,7 +75,7 @@ function update() {
         div.className = "result";
         div.textContent = n;
         let count = document.createElement("strong");
-        count.textContent = tokenizer(n).encode(text).length;
+        count.textContent = tokenizer(n).encode(text, [], []).length;
         div.append(count);
         $("results").append(div);
       }
