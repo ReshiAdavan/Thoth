@@ -22,7 +22,10 @@ const samples = {
   unicode: "Hello · Bonjour · 你好 · مرحبا · नमस्ते 🦉",
   spaces: "one two  three\n\tfour\n\n",
 };
+const localModels = {};
+let localAbort;
 function stop() {
+  localAbort?.abort();
   clearTimeout(timer);
   clearInterval(playTimer);
   client.cancel();
@@ -123,10 +126,36 @@ async function update() {
   const current = revision,
     text = $("text").value;
   invalidate();
-  $("training").hidden = $("encoding").value !== "custom";
-  $("comparison").hidden = !$("compare").checked;
+  const name = $("encoding").value,
+    local = name.startsWith("local-");
+  $("local-controls").hidden = !local;
+  $("local-train").hidden = ["local-gpt", "local-trained"].includes(name);
+  $("sp-upload-label").hidden = name !== "local-llama";
+  $("compare").disabled = local;
+  $("local-state").textContent = localModels[name]
+    ? "Using your trained/imported session model."
+    : name === "local-trained"
+      ? "Saved 16,384-token English + code vocabulary. Ready to use; no training required."
+      : name === "local-llama"
+        ? "Train a demo vocabulary or import the original SentencePiece model to begin."
+        : name === "local-gpt"
+          ? "Reference cl100k_base through our Python GPT4Tokenizer adapter."
+          : "Base byte vocabulary; train to learn merges.";
+  $("training").hidden = name !== "custom";
+  $("comparison").hidden = local || !$("compare").checked;
   $("status").textContent = "Tokenizing…";
   try {
+    if (local) {
+      const result = await localRequest({
+        operation: "encode",
+        name,
+        text,
+        modelId: localModels[name],
+      });
+      if (current === revision)
+        result.pieces ? renderPieces(result) : render(result, text);
+      return;
+    }
     const result = await client.request({
       operation: "encode",
       text,
@@ -136,7 +165,7 @@ async function update() {
     });
     if (current === revision) render(result, text);
   } catch (e) {
-    failure(e);
+    if (current === revision) failure(e);
   }
 }
 $("text").oninput = () => {
@@ -273,3 +302,90 @@ $("cancel").onclick = () => {
     "Operation canceled. Edit text or change encoding to retry.";
 };
 update();
+
+async function localRequest(data) {
+  localAbort = new AbortController();
+  const response = await fetch("/api/tokenize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+    signal: localAbort.signal,
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw Error(
+      "Start the local backend: python -m thoth_demo (from the project virtual environment).",
+    );
+  }
+  if (!response.ok)
+    throw Error(result.error || "Local tokenizer request failed");
+  return result;
+}
+function renderPieces(result) {
+  ids = result.ids;
+  mapping = null;
+  $("tokens").replaceChildren();
+  $("readable").textContent = result.decoded;
+  result.pieces.forEach((piece, i) => {
+    const button = document.createElement("button");
+    button.className = "token";
+    button.style.background = colors[i % colors.length];
+    button.textContent = piece;
+    button.onclick = () => {
+      $("detail").textContent =
+        `SentencePiece ID ${ids[i]} · piece ${JSON.stringify(piece)}. Model normalization means these are not byte offsets into the original input.`;
+    };
+    $("tokens").append(button);
+  });
+  $("count").textContent = ids.length;
+  $("copy").disabled = false;
+  $("status").textContent =
+    `${ids.length} tokens · SentencePiece decoded output shown above; normalization and unknown-token behavior follow the model.`;
+}
+$("local-train").onclick = async () => {
+  stop();
+  const current = revision,
+    name = $("encoding").value;
+  invalidate();
+  $("status").textContent = "Training local implementation…";
+  try {
+    const result = await localRequest({
+      operation: "train",
+      name,
+      text: $("text").value,
+      size: Number($("local-size").value),
+    });
+    if (current !== revision) return;
+    localModels[name] = result.modelId;
+    await update();
+  } catch (e) {
+    if (current === revision) failure(e);
+  }
+};
+$("sp-upload").onchange = async (e) => {
+  stop();
+  const current = revision;
+  try {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 1_000_000) throw Error("Model exceeds 1 MB");
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    if (current !== revision) return;
+    const result = await localRequest({
+      operation: "import",
+      name: "local-llama",
+      model: btoa(binary),
+    });
+    if (current !== revision) return;
+    localModels["local-llama"] = result.modelId;
+    await update();
+  } catch (error) {
+    if (current === revision) failure(error);
+  } finally {
+    e.target.value = "";
+  }
+};

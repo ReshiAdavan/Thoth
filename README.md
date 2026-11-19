@@ -72,3 +72,30 @@ pip install ./rust
 Python, Rust and the browser reject files over 1,000,000 bytes, more than 100,000 merges, token expansions over 65,536 bytes, or a total expanded vocabulary over 16,777,216 bytes. Expansion is checked before allocation. A shared fixture corpus exercises malformed references, duplicate merges and exponential expansion across all three implementations.
 
 Use `THOTH_PREVIEW=1 npm run test:e2e` in `playground` to run browser checks against the production build rather than the development server.
+
+## Show the actual local implementations in the UI
+
+Run these in separate terminals from the checkout:
+
+```sh
+source .venv/bin/activate
+pip install -e '.[test,sentencepiece]'
+# Optional Rust implementation requires a Rust toolchain:
+pip install ./rust
+python -m thoth_demo
+```
+
+```sh
+cd playground
+npm run dev
+```
+
+The dropdown groups browser reference encodings separately from Thoth implementations. Python BasicTokenizer, RegexTokenizer, GPT4Tokenizer, the native Rust BasicTokenizer, and the SentencePiece adapter execute through a loopback-only service on port 8765, proxied by Vite. Train Basic/Regex/Rust on the editor text; their initial vocabulary is bytes only. GPT4Tokenizer uses pretrained cl100k_base. SentencePiece supports demo training or original `.model` upload (1 MB maximum); custom training is not pretrained Llama compatibility. The unfinished historical Rust Llama implementation is not exposed.
+
+Local models are held in memory (up to 16) and expire when the server restarts or evicts them. Browser cancellation ignores an in-flight server result; it does not interrupt native computation already running. The decoded SentencePiece view intentionally does not claim exact input-byte alignment because normalization and unknown tokens depend on the loaded model. Standalone static hosting supports browser choices only; local choices show a backend setup error if the service is unavailable.
+
+Run `THOTH_LOCAL_TESTS=1 npm run test:e2e` with the backend running to exercise all local dropdown options end to end.
+
+## Saved English + code tokenizer
+
+The playground includes **Thoth English + Code v1 · trained 16K**, backed by the committed model in `models/thoth-code-en-v1.json`. See [the model card](models/README.md) for the 36 MB training corpus, held-out results, limitations, source licenses and reproduction commands. No retraining is needed to use this preset.
