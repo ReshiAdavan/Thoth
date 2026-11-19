@@ -272,3 +272,38 @@ footer {
     gap: 14px;
   }
 }
+
+#readable {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 24px;
+  font:
+    17px/1.8 ui-monospace,
+    monospace;
+  border-bottom: 1px solid #303a4e;
+}
+#readable span {
+  cursor: pointer;
+}
+#readable .selected {
+  background: #574780;
+}
+.token.selected {
+  outline: 3px solid white;
+  outline-offset: 1px;
+}
+.view-label {
+  font-size: 14px;
+  color: #a4aec0;
+  padding: 0 24px;
+}
+#tokens {
+  min-height: 100px;
+}
+#cancel {
+  margin: 0 24px 16px;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

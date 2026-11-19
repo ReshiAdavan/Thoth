@@ -56,8 +56,13 @@ Language is a beautiful puzzle.</textarea>
               <h2>Tokens <strong id="count">0</strong></h2>
               <button id="copy">Copy IDs</button>
             </div>
+            <div id="readable" aria-label="Readable text"></div>
+            <p class="view-label">
+              Token bytes · split UTF-8 fragments appear as hex
+            </p>
             <div id="tokens" aria-label="Token visualization"></div>
             <p id="status" role="status">Loading tokenizer…</p>
+            <button id="cancel">Cancel operation</button>
           </div>
         </section>
         <section id="training" hidden>

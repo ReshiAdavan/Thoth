@@ -96,3 +96,37 @@ test("special-token-looking text remains ordinary text", async ({ page }) => {
   await page.locator("#compare").check();
   await expect(page.locator(".result")).toHaveCount(4);
 });
+
+test("shared malformed-model corpus", async () => {
+  const cases = JSON.parse(
+    await readFile(
+      new URL("../../tests/fixtures/models.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  for (const c of cases) {
+    if (c.valid) expect(new BPE(c.model).encode("abab")).toEqual([257]);
+    else expect(() => new BPE(c.model)).toThrow();
+  }
+});
+test("Unicode stays readable and selection links exact bytes", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("#text").fill("🦉 e\u0301 中文 👨‍👩‍👧");
+  await expect(page.locator("#readable")).toHaveText("🦉 e\u0301 中文 👨‍👩‍👧");
+  await expect(page.locator("#tokens")).not.toContainText("�");
+  await page.locator("#readable span").first().click();
+  await expect(page.locator("#detail")).toContainText("UTF-8 bytes 0–4");
+  expect(await page.locator("#tokens .selected").count()).toBeGreaterThan(1);
+});
+test("latest input wins and training can be canceled", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#encoding").selectOption("custom");
+  await page.locator("#text").fill("abcdefghijk ".repeat(1500));
+  await page.locator("#train").click();
+  await page.locator("#cancel").click();
+  await page.locator("#text").fill("latest 🦉");
+  await expect(page.locator("#readable")).toHaveText("latest 🦉");
+  await expect(page.locator("#status")).toContainText("tokens");
+});

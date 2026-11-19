@@ -31,9 +31,9 @@ npm ci
 npm run dev
 ```
 
-Open the printed localhost URL. Tokenization runs in the browser. Choose an encoding, inspect colored tokens and raw bytes, display whitespace, compare counts, or train a byte BPE vocabulary. Export/import basic models using the same versioned JSON format as the Python CLI. Token boundaries may split UTF-8 characters; replacement glyphs in individual token labels do not imply lost bytes. Counts exclude chat framing and other model-specific overhead. The interactive input is limited to 20,000 UTF-8 bytes; custom vocabulary limits are 256–1024.
+Open the printed localhost URL. Tokenization runs in the browser. Choose an encoding, inspect colored tokens and raw bytes, display whitespace, compare counts, or train a byte BPE vocabulary. Export/import basic models using the same versioned JSON format as the Python CLI. The readable view preserves whole graphemes (including emoji and combining marks). Select text or a token to highlight their relationship; token inspection reports exact UTF-8 byte offsets. Tokens containing partial UTF-8 characters display hex bytes instead of replacement glyphs. Counts exclude chat framing and other model-specific overhead. The interactive input is limited to 20,000 UTF-8 bytes; custom vocabulary limits are 256–1024.
 
-`npm run build` creates static assets in `playground/dist`. Encoding tables account for most of the bundle size. No application backend or API key is needed. Inspired by [Tiktokenizer](https://tiktokenizer.vercel.app/).
+`npm run build` creates static assets in `playground/dist`. Encoding tables load on demand in a module worker. Tokenization, training and imports run off the UI thread; newer requests or Cancel terminate in-flight work. Idle workers retain loaded encodings. No application backend or API key is needed. Inspired by [Tiktokenizer](https://tiktokenizer.vercel.app/).
 
 ## Model format
 
@@ -66,3 +66,9 @@ pip install ./rust
 ```
 
 `from thoth_native import NativeTokenizer` exposes `train`, `encode`, `decode`, `encode_batch`, `to_json`, and `from_json`. Basic models interchange with the CLI and browser; regex models are rejected by the native backend. Python regex training weights repeated chunks to avoid scanning duplicate chunks at every merge. JSONL CLI encoding processes one line at a time. Comparison reports include peak Python-tracked allocations; these exclude native-library allocations and are not total process memory. Native bindings currently retain the GIL; batch APIs are sequential.
+
+## Model import bounds
+
+Python, Rust and the browser reject files over 1,000,000 bytes, more than 100,000 merges, token expansions over 65,536 bytes, or a total expanded vocabulary over 16,777,216 bytes. Expansion is checked before allocation. A shared fixture corpus exercises malformed references, duplicate merges and exponential expansion across all three implementations.
+
+Use `THOTH_PREVIEW=1 npm run test:e2e` in `playground` to run browser checks against the production build rather than the development server.
