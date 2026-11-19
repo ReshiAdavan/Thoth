@@ -18,3 +18,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --manifest-path rust/Cargo.toml
+  playground:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: playground/package-lock.json
+      - run: npm ci
+        working-directory: playground
+      - run: npx playwright install --with-deps chromium
+        working-directory: playground
+      - run: npm run build && npm run test:e2e
+        working-directory: playground

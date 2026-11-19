@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "js-tiktoken": "^1.0.21"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "vite": "^8.3.8"
+  },
+  "name": "thoth-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test:e2e": "playwright test"
+  }
+}
