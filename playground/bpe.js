@@ -1,6 +1,7 @@
 export class BPE {
   constructor(data = { version: 1, kind: "basic", merges: [] }) {
     if (
+      !data ||
       data.version !== 1 ||
       data.kind !== "basic" ||
       !Array.isArray(data.merges)
@@ -8,6 +9,12 @@ export class BPE {
       throw Error("Expected a version 1 basic Thoth model");
     this.vocab = Array.from({ length: 256 }, (_, i) => [i]);
     this.merges = [];
+    if (
+      new TextEncoder().encode(JSON.stringify(data)).length > 1_000_000 ||
+      data.merges.length > 100_000
+    )
+      throw Error("Model exceeds import limits");
+    let totalBytes = 256;
     let seen = new Set();
     for (const p of data.merges) {
       if (
@@ -19,6 +26,10 @@ export class BPE {
         seen.has(p.join(","))
       )
         throw Error("Invalid merge");
+      const size = this.vocab[p[0]].length + this.vocab[p[1]].length;
+      totalBytes += size;
+      if (size > 65_536 || totalBytes > 16_777_216)
+        throw Error("Expanded model exceeds byte limits");
       seen.add(p.join(","));
       this.merges.push(p);
       this.vocab.push([...this.vocab[p[0]], ...this.vocab[p[1]]]);
