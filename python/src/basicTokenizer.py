@@ -1,92 +1,71 @@
-import utils as util
+"""Deterministic byte-pair encoding with a complete byte vocabulary."""
+from collections import Counter
 
 class BasicTokenizer:
-    def __init__(self) -> None:
-        pass
-        
-    def train(self, text: str, vocabSize: int) -> None:
-        """Description: Trains the tokenizer"""
-        assert(vocabSize >= 256)
-        if len(text) == 0:
-            raise ValueError("[Thoth => train]: String empty. Nothing to train on.")
+    def __init__(self):
+        self.mints = {}
+        self.vocab = {i: bytes([i]) for i in range(256)}
 
-        print("[Thoth => train]: Training...")
-        self.mints = {} # (int, int) -> int
-        self.vocab = {idx: bytes([idx]) for idx in range(256)}
-        print(self.vocab)
-        
-        tokens = text.encode('utf-8')
-        encodedIntegers = [byte for byte in tokens]
+    def chunks(self, text):
+        return [text.encode("utf-8")]
 
-        commonTuples = util.countCommonEncodedTuples(encodedIntegers)
-        sortedCommonTuples = sorted(((v, k) for k, v in commonTuples.items()), reverse=True) 
-        self.minter(sortedCommonTuples, encodedIntegers, 256, vocabSize)
-        print("[Thoth => train]: Training complete.")
+    @staticmethod
+    def merge(ids, pair, token):
+        result = []
+        i = 0
+        while i < len(ids):
+            if i + 1 < len(ids) and tuple(ids[i:i+2]) == pair:
+                result.append(token)
+                i += 2
+            else:
+                result.append(ids[i])
+                i += 1
+        return result
 
-    def encoder(self, text: str) -> list[int]:
-        """Description: Encodes input text to a compressed sequence of integers """
-        if len(text) == 0:
-            raise ValueError("[Thoth => encoder]: String empty. Nothing to encode.")
-        
-        print("[Thoth => encoder]: Encoding...")
-        tokens = text.encode("utf-8")
-        encodedIntegers = [byte for byte in tokens]
-
-        while len(encodedIntegers) >= 2:
-            commonTuples = util.countCommonEncodedTuples(encodedIntegers)
-            pair = min(commonTuples, key=lambda p: self.mints.get(p, float("inf")))
-            if pair not in self.mints:
+    def train(self, text, vocabSize):
+        if not isinstance(vocabSize, int) or vocabSize < 256:
+            raise ValueError("Vocabulary size must be at least 256")
+        if not text:
+            raise ValueError("Training text must not be empty")
+        self.mints = {}
+        self.vocab = {i: bytes([i]) for i in range(256)}
+        chunks = [list(chunk) for chunk in self.chunks(text)]
+        for token in range(256, vocabSize):
+            counts = Counter(pair for chunk in chunks for pair in zip(chunk, chunk[1:]))
+            if not counts:
                 break
-            idx = self.mints[pair]
-            encodedIntegers = util.merge(pair, encodedIntegers, idx)
-        print("[Thoth => encoder]: Encoding Complete...")
-        return encodedIntegers
+            pair = min(counts, key=lambda pair: (-counts[pair], pair))
+            self.mints[pair] = token
+            self.vocab[token] = self.vocab[pair[0]] + self.vocab[pair[1]]
+            chunks = [self.merge(chunk, pair, token) for chunk in chunks]
 
-    def decoder(self, ids: list[int]) -> str:
-        """Description: Inverse of Encoder -> Converts encoded text into human-readable text input text """
-        if len(ids) == 0:
-            raise ValueError("[Thoth => decoder]: No IDs. Nothing to decode.")
-        
-        print("[Thoth => decoder]: Decoding...")
-        textBytes = b"".join(self.vocab[idx] for idx in ids)
-        print("[Thoth => decoder]: Decoding Complete...")
-        return textBytes.decode("utf-8", errors="replace")
+    def chunkify(self, chunk):
+        ids = list(chunk)
+        while len(ids) > 1:
+            pairs = [p for p in zip(ids, ids[1:]) if p in self.mints]
+            if not pairs:
+                break
+            pair = min(pairs, key=self.mints.get)
+            ids = self.merge(ids, pair, self.mints[pair])
+        return ids
 
-    ########################################################
-    ################### HELPER FUNCTIONS ###################
-    ########################################################
-    
-    def mintToken(self, dictTuples: list[tuple], ids: list[int], idx: int) -> None:
-        """Description: Replaces the most common tuple with a new integer token (created by the tokenizer)"""
-        _, mostCommonPairOfInts  = dictTuples.pop(0)
-        print(f"[Thoth => minter]: Minting {mostCommonPairOfInts} into a new token {idx}")
-        self.mints[mostCommonPairOfInts] = idx
-        self.vocab[idx] = self.vocab[mostCommonPairOfInts[0]] + self.vocab[mostCommonPairOfInts[1]]
-        i = 0 
-        while i < len(ids) - 1:
-            if ids[i] == mostCommonPairOfInts[0] and ids[i + 1] == mostCommonPairOfInts[1]:
-                ids[i:i + 2] = [idx]
-                i -= 1
-            i += 1
-    
-    def minter(self, sortedDictTuples, idsList: list[int], startIndex: int, endIndex: int):
-        """Description: Iteratively replaces common tuples with new integer tokens (minting)"""
-        while (startIndex < endIndex): # tuneable parameter
-            self.mintToken(sortedDictTuples, idsList, startIndex)
-            startIndex += 1
+    def encode(self, text):
+        return [token for chunk in self.chunks(text) for token in self.chunkify(chunk)]
 
-if __name__ == "__main__":
-    BasicTokenizerInstance = BasicTokenizer()
-    filePath = "../data/taylorSwift.txt"
-    with open(filePath, 'r', encoding='utf-8') as file:
-        fileContent = file.read()
-    sampleText = "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe into the hearts of programmers worldwide. We all know we ought to “support Unicode” in our software (whatever that means—like using wchar_t for all the strings, right?). But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus its dozens of supplementary annexes, reports, and notes can be more than a little intimidating. I don’t blame programmers for still finding the whole thing mysterious, even 30 years after Unicode’s inception."
-    vocabSize = 276
+    def decode_bytes(self, ids):
+        try:
+            return b"".join(self.vocab[token] for token in ids)
+        except KeyError as error:
+            raise ValueError(f"Unknown token ID: {error.args[0]}") from error
 
-    print("\n" + sampleText + "\n")
-    BasicTokenizerInstance.train(sampleText, vocabSize)
-    listOfEncodedIntegers = BasicTokenizerInstance.encoder(fileContent)
-    assert(len(listOfEncodedIntegers) > 0)
-    decodedText = BasicTokenizerInstance.decoder(listOfEncodedIntegers)
-    assert(decodedText != "")
-    assert(fileContent == decodedText) # text == decoder(encoder(text))
+    def decode(self, ids, errors="strict"):
+        return self.decode_bytes(ids).decode("utf-8", errors=errors)
+
+    def encode_batch(self, texts):
+        return [self.encode(text) for text in texts]
+
+    def encoder(self, text):
+        return self.encode(text)
+
+    def decoder(self, ids):
+        return self.decode(ids)
