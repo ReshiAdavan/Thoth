@@ -31,7 +31,7 @@ jobs:
         working-directory: playground
       - run: npx playwright install --with-deps chromium
         working-directory: playground
-      - run: npm run build && npm run test:e2e
+      - run: THOTH_PREVIEW=1 npm run test:e2e
         working-directory: playground
   native:
     runs-on: ubuntu-latest

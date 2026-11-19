@@ -130,3 +130,16 @@ test("latest input wins and training can be canceled", async ({ page }) => {
   await expect(page.locator("#readable")).toHaveText("latest 🦉");
   await expect(page.locator("#status")).toContainText("tokens");
 });
+
+test("encoding tables load only when requested", async ({ page }) => {
+  const requests = [];
+  page.on("request", (r) => requests.push(r.url()));
+  await page.goto("/");
+  await expect(page.locator("#count")).toHaveText("14");
+  expect(
+    requests.some((url) => /o200k_base|p50k_base|r50k_base/.test(url)),
+  ).toBe(false);
+  await page.locator("#encoding").selectOption("o200k_base");
+  await expect(page.locator("#status")).toContainText("tokens");
+  expect(requests.some((url) => url.includes("o200k_base"))).toBe(true);
+});
