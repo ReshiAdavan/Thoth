@@ -1,122 +1,58 @@
 # Thoth
 
-Named after the Egyptian god of the moon, of reckoning, of learning, and of writing, is a **_tokenizer_**, purposed for interpreting text input for large-scale language models, such as OpenAI's GPT series of models (e.g., GPT-3.5, GPT-4, GitHub Copilot), Google's PaLM and Gemini, Meta's LLaMA family, and Anthropic's Claude models.
+A tokenizer library, command-line tool and browser playground for exploring byte-pair encoding. Python and Rust implement deterministic byte BPE; named pretrained encodings use tiktoken. A SentencePiece adapter loads actual model files for Llama-compatible IDs.
 
-### Inspiration
+## Install and use
 
-I just felt like it. It seems like the bottleneck of LLMs at the moment, so it would be good to research and develop one, understand up-to-date architectures, and produce better open source implementations in hopes to provide AI in NLP.
+Python 3.10+:
 
-### How to Use
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e '.[test,sentencepiece]'
+printf 'hello hello world' | thoth train --tokenizer basic --vocab-size 300 --output model.json
+printf 'hello world' | thoth encode --model model.json
+printf '[104,101,108,108,111]' | thoth decode --tokenizer basic
+thoth inspect --tokenizer cl100k_base --input data/taylorSwift.txt
+thoth compare --input data/taylorSwift.txt
+```
 
-#### Python
+Commands accept `--input` and `--output`; omitted input reads stdin. Encode emits JSON IDs. Decode emits exact text without adding a newline. `encode --jsonl` handles each line independently. Named encodings: `cl100k_base`, `o200k_base`, `p50k_base`, `r50k_base`. First Python use may download encoding data. Text resembling special tokens is treated as ordinary text unless explicitly allowed through the Python API.
 
-Navigate to the `python/` directory and run the `Makefile`.
+`BasicTokenizer` and `RegexTokenizer` provide `train`, `encode`, `decode`, `decode_bytes`, and `encode_batch`; legacy `encoder`/`decoder` aliases remain. Empty encoding/decoding is supported; training rejects empty text. Invalid IDs and invalid UTF-8 decoding raise errors. Training stops when no pairs remain, so the requested vocabulary is an upper bound. Retraining resets the model. Equal-frequency pairs use lexicographic ordering.
 
-Example: `cd python/ ; make`
+`Llama2Tokenizer(model_file='tokenizer.model')` requires the original model for exact compatibility. Its optional training method creates a new SentencePiece model, not a pretrained Llama vocabulary. SentencePiece normalization and unknown-token behavior follow the loaded model; arbitrary unseen text is not guaranteed lossless.
 
-And you can change which tokenizer you want to run by configuring the `Makefile`
+## Playground
 
-#### Rust
+```sh
+cd playground
+npm ci
+npm run dev
+```
 
-Navigate to the `rust` directory and run `cargo build` and then `cargo run`
+Open the printed localhost URL. Tokenization runs in the browser. Choose an encoding, inspect colored tokens and raw bytes, display whitespace, compare counts, or train a byte BPE vocabulary. Export/import basic models using the same versioned JSON format as the Python CLI. Token boundaries may split UTF-8 characters; replacement glyphs in individual token labels do not imply lost bytes. Counts exclude chat framing and other model-specific overhead. The interactive input is limited to 20,000 UTF-8 bytes; custom vocabulary limits are 256–1024.
 
-Example: `cd rust/ ; cargo build ; cargo run`
+`npm run build` creates static assets in `playground/dist`. Encoding tables account for most of the bundle size. No application backend or API key is needed. Inspired by [Tiktokenizer](https://tiktokenizer.vercel.app/).
 
-And you can change which tokenizer you want to run by specifying in `main.rs`
+## Model format
 
-### Architecture 
+```json
+{"version":1,"kind":"basic","merges":[[97,98],[256,256]]}
+```
 
-#### Python
+Base IDs 0–255 represent bytes. Each merge's array position assigns its ID starting at 256; references must identify earlier tokens. Python regex models also carry `kind: "regex"` and `pattern`. The browser currently imports basic models only. Rust currently supports training and encoding in memory, not this persistence format.
 
-Differs per tokenizer.
+## Validation and benchmarks
 
-##### BasicTokenizer
+```sh
+pytest -q
+cargo test --manifest-path rust/Cargo.toml
+cd playground
+npx playwright install chromium
+npm run test:e2e
+```
 
-This tokenizer designed to perform tokenization by partitioning input text data by collection of bytes. It does not particularly consider the type of text data it analyzes.
+The tests cover deterministic merges, Unicode round trips, invalid IDs/models, CLI subprocesses, reference encoding parity, SentencePiece model loading, and desktop/mobile browser interactions. `thoth compare` reports encoding time and token counts; custom BPE entries train on the input corpus, while named encodings are pretrained, so compression results are not a controlled model-quality comparison. Timing excludes training and encoding initialization.
 
-###### Methods
-
-- **`train`**: Trains the tokenizer on a given text dataset. Initializes vocabulary and trains by identifying common byte sequences and replacing them with new tokens.
-- **`encoder`**: Encodes input text into a compressed sequence of integers. It processes the text by encoding it into bytes, identifying common byte sequences, and replacing them with new tokens.
-- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text. It reverses the encoding process by replacing tokens with their corresponding byte sequences.
-
-###### Key Components
-
-- **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding byte sequences.
-- **Minters (`self.mints`)**: A dictionary that maps byte sequences to their corresponding integer tokens.
-
-##### RegexTokenizer
-
-This tokenizer is designed to perform tokenization tasks using regular expressions. RegeX at least can be made to have some general understanding of the relationships within text data.
-
-###### Methods
-
-- **`train`**: Trains the tokenizer on a given text dataset. Initializes the vocabulary and trains the tokenizer by identifying sequences through RegeX experessions and replaces them with new tokens.
-- **`encoder`**: Encodes input text into a compressed sequence of integers. It processes the through RegeX, identifying common byte sequences, and replacing them with new tokens.
-- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text. It reverses the encoding process by replacing tokens with their corresponding representations.
-
-###### Key Components
-
-- **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding sequences.
-- **Minters (`self.mints`)**: A dictionary that maps sequences to their corresponding integer tokens.
-
-##### GPT4Tokenizer
-
-This tokenizer is designed to perform tokenization tasks specifically tailored for models like GPT-4, ensuring compatibility and efficiency in text processing.
-
-###### Methods
-
-- **`tokenize`**: Tokenizes input text according to GPT-4's tokenization rules. It processes the text by applying the tokenization logic, which may include splitting text into subwords, handling special characters, and more.
-- **`detokenize`**: Converts a sequence of tokens back into human-readable text. It reverses the tokenization process, reconstructing the original text from the tokenized sequence.
-- **`encode`**: Encodes input text into a sequence of integers, representing the tokens in a format that GPT-4 can process.
-- **`decode`**: Decodes a sequence of integers back into human-readable text, reversing the encoding process.
-
-###### Key Components
-
-- **Vocabulary (`self.vocab`)**: A dictionary that maps tokens to their corresponding integer IDs.
-- **Tokenization Rules**: A set of rules for splitting text into tokens, handling special characters, and more, tailored to GPT-4's requirements.
-
-##### Llama2Tokenizer
-
-This tokenizer is designed to perform tokenization tasks using the SentencePiece algorithm, which is a subword tokenization method that is particularly effective for languages with rich morphology. This class encapsulates the process of training a tokenizer on a given text dataset, encoding input text into a compressed sequence of integers, and decoding the encoded sequence back into human-readable text.
-
-###### Methods
-
-- **`train`**: Trains the tokenizer on a given text dataset by identifying the most frequent pairs of Unicode code points and merging them into new tokens, expanding the vocabulary to the specified size.
-- **`encoder`**: Encodes input text into a compressed sequence of integers by breaking down the text into the most frequent subword units identified during training.
-- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text by reversing the encoding process.
-
-###### Key Components
-
-- **Vocabulary (`self.vocab`)**: A dictionary that maps integer tokens to their corresponding Unicode code points or merged pairs of code points.
-- **Token Counter (`self.tokenCounter`)**: A counter used to assign unique identifiers to new tokens generated during the training process.
-
-#### Rust
-
-Differs per tokenizer.
-
-##### BasicTokenizer
-
-This tokenizer is designed to perform tokenization by partitioning input text data into collections of bytes and encoding them into sequences of integer tokens. It does not particularly consider the type of text data it analyzes.
-
-###### Methods
-
-- **`train`**: Trains the tokenizer on a given text dataset. Initializes the vocabulary and identifies common byte sequences, replacing them with new tokens until the desired vocabulary size is reached.
-- **`encoder`**: Encodes input text into a compressed sequence of integers. It processes the text by converting it to bytes, identifying common byte sequences, and replacing them with new tokens based on the previously trained vocabulary.
-- **`decoder`**: Decodes the encoded sequence of integers back into human-readable text. It reverses the encoding process by replacing tokens with their corresponding byte sequences from the vocabulary.
-
-###### Key Components
-
-- **Vocabulary (`self.vocab`)**: An index map that maps integer tokens to their corresponding byte sequences.
-- **Minters (`self.mints`)**: A hashmap that maps byte sequence pairs to their corresponding integer tokens.
-
-##### Llama2Tokenizer
-
-WIP
-
-### Topics
-
-- **Languages**: Python, Rust
-- **Libraries/Frameworks/Tools**: Regex, Tiktoken, Unicodedata
-- <ins>**Other**</ins>:
-  - **Concepts**: Tokenization, Embeddings, LLMs, GPT2.0 & GPT4.0, Llama2, Sentencepiece, Byte-pair encoding (BPE)
+Rust demo: `cargo run --manifest-path rust/Cargo.toml -- 'Hello 🦉'`. The Rust executable exposes the working basic BPE implementation; the historical unfinished Llama implementation is not compiled. Large-corpus incremental training, Python bindings to Rust, and Rust model interchange remain future extensions.
