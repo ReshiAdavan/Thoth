@@ -25,6 +25,8 @@ def save(tokenizer, path):
 
 
 def load(path):
+    if Path(path).stat().st_size > 1_000_000:
+        raise ValueError("Model file exceeds 1 MB")
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if (
         not isinstance(data, dict)
@@ -37,6 +39,9 @@ def load(path):
     if data["kind"] == "regex" and not isinstance(data.get("pattern"), str):
         raise ValueError("Regex model needs a pattern")
     t = RegexTokenizer(data["pattern"]) if data["kind"] == "regex" else BasicTokenizer()
+    if len(data["merges"]) > 100_000:
+        raise ValueError("Model has too many merges")
+    total_bytes = 256
     for token, pair in enumerate(data["merges"], 256):
         if (
             not isinstance(pair, list)
@@ -47,6 +52,10 @@ def load(path):
         pair = tuple(pair)
         if pair in t.mints:
             raise ValueError("Duplicate merge")
+        size = len(t.vocab[pair[0]]) + len(t.vocab[pair[1]])
+        total_bytes += size
+        if size > 65_536 or total_bytes > 16_777_216:
+            raise ValueError("Expanded model exceeds byte limits")
         t.mints[pair] = token
         t.vocab[token] = t.vocab[pair[0]] + t.vocab[pair[1]]
     return t

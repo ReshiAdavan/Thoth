@@ -103,15 +103,27 @@ impl BasicTokenizer {
         .map_err(|e| e.to_string())
     }
     pub fn from_json(data: &str) -> Result<Self, String> {
+        if data.len() > 1_000_000 {
+            return Err("Model file exceeds 1 MB".into());
+        }
         let model: Model = serde_json::from_str(data).map_err(|e| e.to_string())?;
         if model.version != 1 || model.kind != "basic" {
             return Err("Unsupported model format".into());
         }
+        if model.merges.len() > 100_000 {
+            return Err("Model has too many merges".into());
+        }
         let mut t = Self::new();
+        let mut total_bytes = 256;
         for pair in model.merges {
             let token = t.vocab.len();
             if pair.0 >= token || pair.1 >= token || t.merges.contains_key(&pair) {
                 return Err("Invalid merge".into());
+            }
+            let size = t.vocab[pair.0].len() + t.vocab[pair.1].len();
+            total_bytes += size;
+            if size > 65_536 || total_bytes > 16_777_216 {
+                return Err("Expanded model exceeds byte limits".into());
             }
             let mut bytes = t.vocab[pair.0].clone();
             bytes.extend(&t.vocab[pair.1]);
