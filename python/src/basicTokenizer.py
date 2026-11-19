@@ -1,5 +1,7 @@
 """Deterministic byte-pair encoding with a complete byte vocabulary."""
+
 from collections import Counter
+
 
 class BasicTokenizer:
     def __init__(self):
@@ -14,7 +16,7 @@ class BasicTokenizer:
         result = []
         i = 0
         while i < len(ids):
-            if i + 1 < len(ids) and tuple(ids[i:i+2]) == pair:
+            if i + 1 < len(ids) and tuple(ids[i : i + 2]) == pair:
                 result.append(token)
                 i += 2
             else:
@@ -29,15 +31,21 @@ class BasicTokenizer:
             raise ValueError("Training text must not be empty")
         self.mints = {}
         self.vocab = {i: bytes([i]) for i in range(256)}
-        chunks = [list(chunk) for chunk in self.chunks(text)]
+        chunks = Counter(tuple(chunk) for chunk in self.chunks(text))
         for token in range(256, vocabSize):
-            counts = Counter(pair for chunk in chunks for pair in zip(chunk, chunk[1:]))
+            counts = Counter()
+            for chunk, weight in chunks.items():
+                for pair in zip(chunk, chunk[1:]):
+                    counts[pair] += weight
             if not counts:
                 break
             pair = min(counts, key=lambda pair: (-counts[pair], pair))
             self.mints[pair] = token
             self.vocab[token] = self.vocab[pair[0]] + self.vocab[pair[1]]
-            chunks = [self.merge(chunk, pair, token) for chunk in chunks]
+            updated = Counter()
+            for chunk, weight in chunks.items():
+                updated[tuple(self.merge(chunk, pair, token))] += weight
+            chunks = updated
 
     def chunkify(self, chunk):
         ids = list(chunk)

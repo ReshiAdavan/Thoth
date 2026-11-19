@@ -1,2 +1,104 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thoth • Token laboratory</title></head><body><div id="app"><header><a href="/" class="brand">◈ Thoth <span>Token laboratory</span></a><span class="privacy">Runs on your device</span></header><main><div class="intro"><p class="eyebrow">LOOK INSIDE LANGUAGE</p><h1>Every word has<br>a little more to it.</h1><p>Explore how text becomes tokens. Compare vocabularies,<br>inspect the bytes, or train your own.</p></div><div class="toolbar"><label>Tokenizer<select id="encoding"><option>cl100k_base</option><option>o200k_base</option><option>p50k_base</option><option>r50k_base</option><option value="custom">Trainable byte BPE</option></select></label><label class="check"><input id="whitespace" type="checkbox"> Show whitespace</label><label class="check"><input id="compare" type="checkbox"> Compare encodings</label></div><section class="workspace"><div class="panel"><div class="panel-title"><h2>Your text</h2><button id="clear">Clear</button></div><label class="sr" for="text">Text to tokenize</label><textarea id="text" spellcheck="false">Hello, world! 🦉
-Language is a beautiful puzzle.</textarea><div class="samples"><span>Try a sample</span><button data-sample="code">Code</button><button data-sample="unicode">Multilingual</button><button data-sample="spaces">Whitespace</button></div></div><div class="panel"><div class="panel-title"><h2>Tokens <strong id="count">0</strong></h2><button id="copy">Copy IDs</button></div><div id="tokens" aria-label="Token visualization"></div><p id="status" role="status">Loading tokenizer…</p></div></section><section id="training" hidden><h2>Your vocabulary</h2><p>Train byte-pair merges on the text above. Unseen text remains representable through the 256 base bytes.</p><label>Vocabulary limit <input id="vocab" type="number" min="256" max="1024" value="300"></label><button id="train">Train on text</button><button id="export">Export model</button><label>Import model <input id="import" type="file" accept=".json"></label><p id="merges"></p><label>Merge step <input id="step" type="range" min="0" max="0" value="0"></label><button id="play">Play merges</button><p id="trace" aria-live="polite"></p></section><section id="comparison" hidden><h2>Same text. Different boundaries.</h2><div id="results"></div></section><aside id="detail" aria-live="polite">Select a token to inspect its ID, bytes and position.</aside><footer>Thoth / An open tokenizer workbench <span>Counts cover text only, excluding chat message overhead.</span></footer></main></div><script type="module" src="/main.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Thoth • Token laboratory</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <a href="/" class="brand">◈ Thoth <span>Token laboratory</span></a
+        ><span class="privacy">Runs on your device</span>
+      </header>
+      <main>
+        <div class="intro">
+          <p class="eyebrow">LOOK INSIDE LANGUAGE</p>
+          <h1>Every word has<br />a little more to it.</h1>
+          <p>
+            Explore how text becomes tokens. Compare vocabularies,<br />inspect
+            the bytes, or train your own.
+          </p>
+        </div>
+        <div class="toolbar">
+          <label
+            >Tokenizer<select id="encoding">
+              <option>cl100k_base</option>
+              <option>o200k_base</option>
+              <option>p50k_base</option>
+              <option>r50k_base</option>
+              <option value="custom">Trainable byte BPE</option>
+            </select></label
+          ><label class="check"
+            ><input id="whitespace" type="checkbox" /> Show whitespace</label
+          ><label class="check"
+            ><input id="compare" type="checkbox" /> Compare encodings</label
+          >
+        </div>
+        <section class="workspace">
+          <div class="panel">
+            <div class="panel-title">
+              <h2>Your text</h2>
+              <button id="clear">Clear</button>
+            </div>
+            <label class="sr" for="text">Text to tokenize</label
+            ><textarea id="text" spellcheck="false">
+Hello, world! 🦉
+Language is a beautiful puzzle.</textarea>
+            <div class="samples">
+              <span>Try a sample</span><button data-sample="code">Code</button
+              ><button data-sample="unicode">Multilingual</button
+              ><button data-sample="spaces">Whitespace</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">
+              <h2>Tokens <strong id="count">0</strong></h2>
+              <button id="copy">Copy IDs</button>
+            </div>
+            <div id="tokens" aria-label="Token visualization"></div>
+            <p id="status" role="status">Loading tokenizer…</p>
+          </div>
+        </section>
+        <section id="training" hidden>
+          <h2>Your vocabulary</h2>
+          <p>
+            Train byte-pair merges on the text above. Unseen text remains
+            representable through the 256 base bytes.
+          </p>
+          <label
+            >Vocabulary limit
+            <input
+              id="vocab"
+              type="number"
+              min="256"
+              max="1024"
+              value="300" /></label
+          ><button id="train">Train on text</button
+          ><button id="export">Export model</button
+          ><label
+            >Import model <input id="import" type="file" accept=".json"
+          /></label>
+          <p id="merges"></p>
+          <label
+            >Merge step
+            <input id="step" type="range" min="0" max="0" value="0" /></label
+          ><button id="play">Play merges</button>
+          <p id="trace" aria-live="polite"></p>
+        </section>
+        <section id="comparison" hidden>
+          <h2>Same text. Different boundaries.</h2>
+          <div id="results"></div>
+        </section>
+        <aside id="detail" aria-live="polite">
+          Select a token to inspect its ID, bytes and position.
+        </aside>
+        <footer>
+          Thoth / An open tokenizer workbench
+          <span>Counts cover text only, excluding chat message overhead.</span>
+        </footer>
+      </main>
+    </div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

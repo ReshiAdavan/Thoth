@@ -41,7 +41,7 @@ Open the printed localhost URL. Tokenization runs in the browser. Choose an enco
 {"version":1,"kind":"basic","merges":[[97,98],[256,256]]}
 ```
 
-Base IDs 0–255 represent bytes. Each merge's array position assigns its ID starting at 256; references must identify earlier tokens. Python regex models also carry `kind: "regex"` and `pattern`. The browser currently imports basic models only. Rust currently supports training and encoding in memory, not this persistence format.
+Base IDs 0–255 represent bytes. Each merge's array position assigns its ID starting at 256; references must identify earlier tokens. Python regex models also carry `kind: "regex"` and `pattern`. The browser currently imports basic models only. Rust supports this basic persistence format through its library and optional Python bindings.
 
 ## Validation and benchmarks
 
@@ -55,4 +55,14 @@ npm run test:e2e
 
 The tests cover deterministic merges, Unicode round trips, invalid IDs/models, CLI subprocesses, reference encoding parity, SentencePiece model loading, and desktop/mobile browser interactions. `thoth compare` reports encoding time and token counts; custom BPE entries train on the input corpus, while named encodings are pretrained, so compression results are not a controlled model-quality comparison. Timing excludes training and encoding initialization.
 
-Rust demo: `cargo run --manifest-path rust/Cargo.toml -- 'Hello 🦉'`. The Rust executable exposes the working basic BPE implementation; the historical unfinished Llama implementation is not compiled. Large-corpus incremental training, Python bindings to Rust, and Rust model interchange remain future extensions.
+Rust demo: `cargo run --manifest-path rust/Cargo.toml -- 'Hello 🦉'`. The Rust executable exposes the working basic BPE implementation; the historical unfinished Llama implementation is not compiled. Incremental pair-count updates for large-corpus training remain a future optimization.
+
+## Optional native Python backend
+
+With Rust installed, build the extension in an active virtual environment:
+
+```sh
+pip install ./rust
+```
+
+`from thoth_native import NativeTokenizer` exposes `train`, `encode`, `decode`, `encode_batch`, `to_json`, and `from_json`. Basic models interchange with the CLI and browser; regex models are rejected by the native backend. Python regex training weights repeated chunks to avoid scanning duplicate chunks at every merge. JSONL CLI encoding processes one line at a time. Comparison reports include peak Python-tracked allocations; these exclude native-library allocations and are not total process memory. Native bindings currently retain the GIL; batch APIs are sequential.
