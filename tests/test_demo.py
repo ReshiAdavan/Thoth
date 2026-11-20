@@ -34,6 +34,30 @@ def test_demo_errors():
     with pytest.raises(ValueError):
         execute({"name": "other"})
     with pytest.raises(ValueError):
-        execute({"name": "local-llama", "text": "hello"})
+        execute({"name": "local-llama", "text": "hello", "modelId": "expired"})
     with pytest.raises(ValueError):
         execute({"name": "local-basic", "text": "a" * 20001})
+
+
+@pytest.mark.parametrize(
+    "name", ["local-basic", "local-regex", "local-rust", "local-llama"]
+)
+def test_saved_family(name):
+    if name == "local-rust":
+        pytest.importorskip("thoth_native")
+    result = execute(
+        {
+            "name": name,
+            "text": "Hello world! Python programming is fun.",
+            "compare": True,
+        }
+    )
+    assert len(result["ids"]) < 25
+    assert set(result["counts"]) == {name, "cl100k_base"}
+    if name == "local-llama":
+        assert result["decoded"] == "Hello world! Python programming is fun."
+    else:
+        assert (
+            bytes(b for chunk in result["bytes"] for b in chunk).decode()
+            == "Hello world! Python programming is fun."
+        )

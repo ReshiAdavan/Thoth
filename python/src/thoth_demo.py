@@ -24,12 +24,30 @@ NAMES = {
 }
 
 
-@lru_cache(maxsize=1)
-def trained_model():
-    return load(Path(__file__).resolve().parents[2] / "models/thoth-code-en-v1.json")
+@lru_cache(maxsize=4)
+def trained_model(name="local-regex"):
+    root = Path(__file__).resolve().parents[2] / "models"
+    if name == "local-llama":
+        return Llama2Tokenizer(root / "thoth-sentencepiece-en-code-v1.model")
+    if name == "local-rust":
+        from thoth_native import NativeTokenizer
+
+        return NativeTokenizer.from_json(
+            (root / "thoth-basic-en-code-v1.json").read_text()
+        )
+    return load(
+        root
+        / (
+            "thoth-basic-en-code-v1.json"
+            if name == "local-basic"
+            else "thoth-code-en-v1.json"
+        )
+    )
 
 
-def create(name):
+def create(name, trained=True):
+    if trained and name in ("local-basic", "local-regex", "local-rust", "local-llama"):
+        return trained_model(name)
     if name == "local-trained":
         return trained_model()
     if name == "local-basic":
@@ -56,7 +74,7 @@ def execute(data):
         raise ValueError("Use at most 20,000 UTF-8 bytes")
     operation = data.get("operation", "encode")
     if operation in ("train", "import"):
-        t = create(name)
+        t = create(name, trained=False)
         if operation == "import":
             if name != "local-llama":
                 raise ValueError("Model-file import is for SentencePiece")
@@ -90,12 +108,17 @@ def execute(data):
     else:
         t = create(name)
     ids = t.encode(text)
+    counts = (
+        {name: len(ids), "cl100k_base": len(GPT4Tokenizer().encode(text))}
+        if data.get("compare")
+        else {}
+    )
     if name == "local-llama":
         return {
             "ids": ids,
             "pieces": [t.processor.id_to_piece(i) for i in ids],
             "decoded": t.decode(ids),
-            "counts": {},
+            "counts": counts,
         }
     if name == "local-rust":
         model = json.loads(t.to_json())
@@ -105,7 +128,7 @@ def execute(data):
         byte_lists = [list(vocab[i]) for i in ids]
     else:
         byte_lists = [list(t.decode_bytes([i])) for i in ids]
-    return {"ids": ids, "bytes": byte_lists, "counts": {}}
+    return {"ids": ids, "bytes": byte_lists, "counts": counts}
 
 
 class Handler(BaseHTTPRequestHandler):
