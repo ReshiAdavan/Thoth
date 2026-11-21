@@ -43,3 +43,16 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: pip install -e '.[test,sentencepiece]' ./rust
       - run: pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --prefix playground
+      - run: npx playwright install --with-deps chromium
+        working-directory: playground
+      - name: Local implementation browser tests
+        run: |
+          python -m thoth_demo > /tmp/thoth-demo.log 2>&1 &
+          demo_pid=$!
+          trap 'kill "$demo_pid"' EXIT
+          THOTH_LOCAL_TESTS=1 THOTH_PREVIEW=1 npm --prefix playground run test:e2e

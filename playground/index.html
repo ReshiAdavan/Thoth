@@ -23,18 +23,55 @@
         <div class="toolbar">
           <label
             >Tokenizer<select id="encoding">
-              <option>cl100k_base</option>
-              <option>o200k_base</option>
-              <option>p50k_base</option>
-              <option>r50k_base</option>
-              <option value="custom">Trainable byte BPE</option>
+              <optgroup label="Our trained tokenizers · English + Code">
+                <option value="local-basic">
+                  Basic BPE · Python · trained 16K
+                </option>
+                <option value="local-rust">
+                  Basic BPE · Rust · trained 16K
+                </option>
+                <option value="local-regex" selected>
+                  Regex BPE · Python · trained 16K
+                </option>
+                <option value="local-llama">
+                  SentencePiece BPE · custom trained 16K
+                </option>
+              </optgroup>
+              <optgroup label="Reference · JavaScript">
+                <option value="cl100k_base">
+                  cl100k_base · comparison reference
+                </option>
+              </optgroup>
             </select></label
           ><label class="check"
             ><input id="whitespace" type="checkbox" /> Show whitespace</label
           ><label class="check"
-            ><input id="compare" type="checkbox" /> Compare encodings</label
+            ><input id="compare" type="checkbox" /> Compare with
+            reference</label
           >
         </div>
+        <section id="local-controls" hidden>
+          <p>
+            These options execute the repository’s Python or Rust code through
+            the local demo server. Pretrained Llama IDs require the original
+            SentencePiece model; demo training creates a new vocabulary.
+          </p>
+          <label
+            >Vocabulary size
+            <input
+              id="local-size"
+              type="number"
+              min="256"
+              max="1024"
+              value="300"
+          /></label>
+          <button id="local-train">Train a temporary demo on text</button>
+          <label id="sp-upload-label" hidden
+            >SentencePiece model (.model, max 1 MB)
+            <input id="sp-upload" type="file" accept=".model"
+          /></label>
+          <p id="local-state">Base byte vocabulary; train to learn merges.</p>
+        </section>
         <section class="workspace">
           <div class="panel">
             <div class="panel-title">
@@ -64,32 +101,6 @@ Language is a beautiful puzzle.</textarea>
             <p id="status" role="status">Loading tokenizer…</p>
             <button id="cancel">Cancel operation</button>
           </div>
-        </section>
-        <section id="training" hidden>
-          <h2>Your vocabulary</h2>
-          <p>
-            Train byte-pair merges on the text above. Unseen text remains
-            representable through the 256 base bytes.
-          </p>
-          <label
-            >Vocabulary limit
-            <input
-              id="vocab"
-              type="number"
-              min="256"
-              max="1024"
-              value="300" /></label
-          ><button id="train">Train on text</button
-          ><button id="export">Export model</button
-          ><label
-            >Import model <input id="import" type="file" accept=".json"
-          /></label>
-          <p id="merges"></p>
-          <label
-            >Merge step
-            <input id="step" type="range" min="0" max="0" value="0" /></label
-          ><button id="play">Play merges</button>
-          <p id="trace" aria-live="polite"></p>
         </section>
         <section id="comparison" hidden>
           <h2>Same text. Different boundaries.</h2>

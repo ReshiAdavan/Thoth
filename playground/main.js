@@ -11,20 +11,20 @@ const colors = [
   "#dbacc2",
   "#b6c4ee",
 ];
-let model = { version: 1, kind: "basic", merges: [] },
-  ids = [],
+let ids = [],
   mapping = null,
   timer,
-  playTimer,
   revision = 0;
 const samples = {
   code: 'def hello(name):\n    return f"Hello, {name}!"',
   unicode: "Hello · Bonjour · 你好 · مرحبا · नमस्ते 🦉",
   spaces: "one two  three\n\tfour\n\n",
 };
+const localModels = {};
+let localAbort;
 function stop() {
+  localAbort?.abort();
   clearTimeout(timer);
-  clearInterval(playTimer);
   client.cancel();
   revision++;
 }
@@ -107,8 +107,11 @@ function render(result, text) {
   $("copy").disabled = false;
   $("status").textContent =
     `${text.length} UTF-16 units · ${new TextEncoder().encode(text).length} UTF-8 bytes · ${ids.length} tokens`;
+  renderCounts(result.counts);
+}
+function renderCounts(counts) {
   $("results").replaceChildren();
-  for (const [name, count] of Object.entries(result.counts)) {
+  for (const [name, count] of Object.entries(counts)) {
     const div = document.createElement("div");
     div.className = "result";
     div.textContent = name;
@@ -123,20 +126,39 @@ async function update() {
   const current = revision,
     text = $("text").value;
   invalidate();
-  $("training").hidden = $("encoding").value !== "custom";
+  const name = $("encoding").value,
+    local = name.startsWith("local-");
+  $("local-controls").hidden = !local;
+  $("local-train").hidden = ["local-gpt", "local-trained"].includes(name);
+  $("sp-upload-label").hidden = name !== "local-llama";
+  $("compare").disabled = false;
+  $("local-state").textContent = localModels[name]
+    ? "Using your trained/imported session model."
+    : "Saved 16,384-token English + code vocabulary. Ready to use; no training required.";
   $("comparison").hidden = !$("compare").checked;
   $("status").textContent = "Tokenizing…";
   try {
+    if (local) {
+      const result = await localRequest({
+        operation: "encode",
+        name,
+        text,
+        modelId: localModels[name],
+        compare: $("compare").checked,
+      });
+      if (current === revision)
+        result.pieces ? renderPieces(result) : render(result, text);
+      return;
+    }
     const result = await client.request({
       operation: "encode",
       text,
       name: $("encoding").value,
-      model,
       compare: $("compare").checked,
     });
     if (current === revision) render(result, text);
   } catch (e) {
-    failure(e);
+    if (current === revision) failure(e);
   }
 }
 $("text").oninput = () => {
@@ -178,98 +200,97 @@ $("copy").onclick = async () => {
     $("status").textContent = "Clipboard unavailable in this browser";
   }
 };
-async function trace() {
-  const current = revision,
-    step = Number($("step").value);
-  try {
-    const tokens = await client.request({
-      operation: "trace",
-      text: $("text").value,
-      model,
-      step,
-    });
-    if (current === revision)
-      $("trace").textContent =
-        `Step ${step}/${model.merges.length}: [${tokens.join(", ")}]`;
-  } catch (e) {
-    failure(e);
-  }
-}
-function modelChanged(message) {
-  $("merges").textContent = message;
-  $("step").max = model.merges.length;
-  $("step").value = 0;
-  $("trace").textContent = "";
-  return update();
-}
-$("train").onclick = async () => {
-  stop();
-  const current = revision;
-  $("status").textContent = "Training…";
-  try {
-    const next = await client.request({
-      operation: "train",
-      text: $("text").value,
-      size: Number($("vocab").value),
-    });
-    if (current !== revision) return;
-    model = next;
-    await modelChanged(
-      `Learned ${model.merges.length} merges · ${256 + model.merges.length} vocabulary entries`,
-    );
-  } catch (e) {
-    failure(e);
-  }
-};
-$("import").onchange = async (e) => {
-  stop();
-  const current = revision;
-  try {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 1_000_000) throw Error("Model file exceeds 1 MB");
-    const json = await file.text();
-    if (current !== revision) return;
-    const next = await client.request({ operation: "import", json });
-    if (current !== revision) return;
-    model = next;
-    await modelChanged(`Imported ${model.merges.length} merges`);
-  } catch (e) {
-    failure(e);
-  } finally {
-    e.target.value = "";
-  }
-};
-$("export").onclick = () => {
-  const url = URL.createObjectURL(
-    new Blob([JSON.stringify(model, null, 2)], { type: "application/json" }),
-  );
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "thoth-model.json";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
-$("step").oninput = () => {
-  clearInterval(playTimer);
-  trace();
-};
-$("play").onclick = async () => {
-  clearInterval(playTimer);
-  $("step").value = 0;
-  await trace();
-  playTimer = setInterval(async () => {
-    if (Number($("step").value) >= model.merges.length) {
-      clearInterval(playTimer);
-      return;
-    }
-    $("step").value = Number($("step").value) + 1;
-    await trace();
-  }, 500);
-};
 $("cancel").onclick = () => {
   stop();
   $("status").textContent =
     "Operation canceled. Edit text or change encoding to retry.";
 };
 update();
+
+async function localRequest(data) {
+  localAbort = new AbortController();
+  const response = await fetch("/api/tokenize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+    signal: localAbort.signal,
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw Error(
+      "Start the local backend: python -m thoth_demo (from the project virtual environment).",
+    );
+  }
+  if (!response.ok)
+    throw Error(result.error || "Local tokenizer request failed");
+  return result;
+}
+function renderPieces(result) {
+  renderCounts(result.counts);
+  ids = result.ids;
+  mapping = null;
+  $("tokens").replaceChildren();
+  $("readable").textContent = result.decoded;
+  result.pieces.forEach((piece, i) => {
+    const button = document.createElement("button");
+    button.className = "token";
+    button.style.background = colors[i % colors.length];
+    button.textContent = piece;
+    button.onclick = () => {
+      $("detail").textContent =
+        `SentencePiece ID ${ids[i]} · piece ${JSON.stringify(piece)}. Model normalization means these are not byte offsets into the original input.`;
+    };
+    $("tokens").append(button);
+  });
+  $("count").textContent = ids.length;
+  $("copy").disabled = false;
+  $("status").textContent =
+    `${ids.length} tokens · SentencePiece decoded output shown above; normalization and unknown-token behavior follow the model.`;
+}
+$("local-train").onclick = async () => {
+  stop();
+  const current = revision,
+    name = $("encoding").value;
+  invalidate();
+  $("status").textContent = "Training local implementation…";
+  try {
+    const result = await localRequest({
+      operation: "train",
+      name,
+      text: $("text").value,
+      size: Number($("local-size").value),
+    });
+    if (current !== revision) return;
+    localModels[name] = result.modelId;
+    await update();
+  } catch (e) {
+    if (current === revision) failure(e);
+  }
+};
+$("sp-upload").onchange = async (e) => {
+  stop();
+  const current = revision;
+  try {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 1_000_000) throw Error("Model exceeds 1 MB");
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    if (current !== revision) return;
+    const result = await localRequest({
+      operation: "import",
+      name: "local-llama",
+      model: btoa(binary),
+    });
+    if (current !== revision) return;
+    localModels["local-llama"] = result.modelId;
+    await update();
+  } catch (error) {
+    if (current === revision) failure(error);
+  } finally {
+    e.target.value = "";
+  }
+};

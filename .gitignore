@@ -192,3 +192,8 @@ __pycache__/
 node_modules/
 playwright-report/
 test-results/
+
+training/cache/
+
+# Pin native runtime dependencies for reproducible builds and benchmarks.
+!/rust/Cargo.lock

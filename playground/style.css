@@ -307,3 +307,20 @@ button:disabled {
   opacity: 0.5;
   cursor: default;
 }
+
+#local-controls {
+  padding: 20px;
+  background: #151d2b;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+#local-controls label {
+  display: inline-block;
+  margin-right: 12px;
+}
+#local-size {
+  width: 90px;
+  padding: 8px;
+}

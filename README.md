@@ -21,7 +21,7 @@ Commands accept `--input` and `--output`; omitted input reads stdin. Encode emit
 
 `BasicTokenizer` and `RegexTokenizer` provide `train`, `encode`, `decode`, `decode_bytes`, and `encode_batch`; legacy `encoder`/`decoder` aliases remain. Empty encoding/decoding is supported; training rejects empty text. Invalid IDs and invalid UTF-8 decoding raise errors. Training stops when no pairs remain, so the requested vocabulary is an upper bound. Retraining resets the model. Equal-frequency pairs use lexicographic ordering.
 
-`Llama2Tokenizer(model_file='tokenizer.model')` requires the original model for exact compatibility. Its optional training method creates a new SentencePiece model, not a pretrained Llama vocabulary. SentencePiece normalization and unknown-token behavior follow the loaded model; arbitrary unseen text is not guaranteed lossless.
+`Llama2Tokenizer(model_file='tokenizer.model')` requires the original model for exact compatibility. Its optional training method creates a new SentencePiece model, not a pretrained Llama vocabulary. The adapter checks exact text recovery, uses explicit byte pieces when needed and available, and raises an error if a loaded model cannot preserve the input. This checked mode can differ from canonical Llama/SentencePiece IDs on exceptional text; see the tokenizer contracts.
 
 ## Playground
 
@@ -31,9 +31,11 @@ npm ci
 npm run dev
 ```
 
-Open the printed localhost URL. Tokenization runs in the browser. Choose an encoding, inspect colored tokens and raw bytes, display whitespace, compare counts, or train a byte BPE vocabulary. Export/import basic models using the same versioned JSON format as the Python CLI. The readable view preserves whole graphemes (including emoji and combining marks). Select text or a token to highlight their relationship; token inspection reports exact UTF-8 byte offsets. Tokens containing partial UTF-8 characters display hex bytes instead of replacement glyphs. Counts exclude chat framing and other model-specific overhead. The interactive input is limited to 20,000 UTF-8 bytes; custom vocabulary limits are 256–1024.
+Open the printed localhost URL and start the local backend as described below. The default is Thoth's trained Regex BPE. Four local implementations load saved vocabularies; one JavaScript reference, cl100k_base, runs in a browser worker. Inspect colored tokens and raw bytes, display whitespace, or compare counts. The readable byte-BPE view preserves whole graphemes, including emoji and combining marks. Select text or a token to inspect their relationship and exact UTF-8 offsets. Counts exclude chat framing. Input is limited to 20,000 UTF-8 bytes.
 
-`npm run build` creates static assets in `playground/dist`. Encoding tables load on demand in a module worker. Tokenization, training and imports run off the UI thread; newer requests or Cancel terminate in-flight work. Idle workers retain loaded encodings. No application backend or API key is needed. Inspired by [Tiktokenizer](https://tiktokenizer.vercel.app/).
+Local temporary training uses the editor text and never overwrites saved release models. SentencePiece also accepts model uploads. Its decoded view follows the loaded model's normalization and does not claim byte alignment.
+
+`npm run build` creates static assets in `playground/dist`. The reference table loads on demand in a module worker. Local choices require the loopback backend; no API key is needed. Inspired by [Tiktokenizer](https://tiktokenizer.vercel.app/).
 
 ## Model format
 
@@ -41,7 +43,7 @@ Open the printed localhost URL. Tokenization runs in the browser. Choose an enco
 {"version":1,"kind":"basic","merges":[[97,98],[256,256]]}
 ```
 
-Base IDs 0–255 represent bytes. Each merge's array position assigns its ID starting at 256; references must identify earlier tokens. Python regex models also carry `kind: "regex"` and `pattern`. The browser currently imports basic models only. Rust supports this basic persistence format through its library and optional Python bindings.
+Base IDs 0–255 represent bytes. Each merge's array position assigns its ID starting at 256; references must identify earlier tokens. Python regex models also carry `kind: "regex"` and `pattern`. Rust supports this basic persistence format through its library and optional Python bindings.
 
 ## Validation and benchmarks
 
@@ -55,7 +57,7 @@ npm run test:e2e
 
 The tests cover deterministic merges, Unicode round trips, invalid IDs/models, CLI subprocesses, reference encoding parity, SentencePiece model loading, and desktop/mobile browser interactions. `thoth compare` reports encoding time and token counts; custom BPE entries train on the input corpus, while named encodings are pretrained, so compression results are not a controlled model-quality comparison. Timing excludes training and encoding initialization.
 
-Rust demo: `cargo run --manifest-path rust/Cargo.toml -- 'Hello 🦉'`. The Rust executable exposes the working basic BPE implementation; the historical unfinished Llama implementation is not compiled. Incremental pair-count updates for large-corpus training remain a future optimization.
+Rust demo: `cargo run --manifest-path rust/Cargo.toml --bin thoth -- 'Hello 🦉'`. The Rust executable exposes the working basic BPE implementation; the completed SentencePiece/Llama runtime is available as a Rust library and native Python class. The train_bpe executable uses incremental weighted pair counts for release training.
 
 ## Optional native Python backend
 
@@ -65,10 +67,51 @@ With Rust installed, build the extension in an active virtual environment:
 pip install ./rust
 ```
 
-`from thoth_native import NativeTokenizer` exposes `train`, `encode`, `decode`, `encode_batch`, `to_json`, and `from_json`. Basic models interchange with the CLI and browser; regex models are rejected by the native backend. Python regex training weights repeated chunks to avoid scanning duplicate chunks at every merge. JSONL CLI encoding processes one line at a time. Comparison reports include peak Python-tracked allocations; these exclude native-library allocations and are not total process memory. Native bindings currently retain the GIL; batch APIs are sequential.
+`from thoth_native import NativeTokenizer` exposes `train`, `encode`, `decode`, `encode_batch`, `to_json`, and `from_json`. Basic models interchange with the CLI and local playground backend; regex models are rejected by the native backend. Python regex training weights repeated chunks to avoid scanning duplicate chunks at every merge. JSONL CLI encoding processes one line at a time. Comparison reports include peak Python-tracked allocations; these exclude native-library allocations and are not total process memory. Native bindings currently retain the GIL; batch APIs are sequential.
 
 ## Model import bounds
 
 Python, Rust and the browser reject files over 1,000,000 bytes, more than 100,000 merges, token expansions over 65,536 bytes, or a total expanded vocabulary over 16,777,216 bytes. Expansion is checked before allocation. A shared fixture corpus exercises malformed references, duplicate merges and exponential expansion across all three implementations.
 
 Use `THOTH_PREVIEW=1 npm run test:e2e` in `playground` to run browser checks against the production build rather than the development server.
+
+## Show the actual local implementations in the UI
+
+Run these in separate terminals from the checkout:
+
+```sh
+source .venv/bin/activate
+pip install -e '.[test,sentencepiece]'
+# Optional Rust implementation requires a Rust toolchain:
+pip install ./rust
+python -m thoth_demo
+```
+
+```sh
+cd playground
+npm run dev
+```
+
+The dropdown exposes Python BasicTokenizer, RegexTokenizer, the native Rust BasicTokenizer, and the SentencePiece adapter through a loopback-only service on port 8765, proxied by Vite. Each loads a saved 16K vocabulary. JavaScript cl100k_base is the sole reference choice. The Rust SentencePiece runtime is available through the library; it has not yet been added to the dropdown.
+
+Temporary models are held in memory (up to 16) and expire when the server restarts or evicts them; release artifacts persist on disk. Browser cancellation ignores an in-flight server result; it does not interrupt native computation already running. Standalone static hosting supports the JavaScript reference only; local choices show a backend setup error if the service is unavailable.
+
+Run `THOTH_LOCAL_TESTS=1 npm run test:e2e` with the backend running to exercise all local dropdown options end to end.
+
+## Saved English + code tokenizer
+
+The playground includes **Regex BPE · Python · trained 16K**, backed by the committed model in `models/thoth-code-en-v1.json`. See [the model card](models/README.md) for the 36 MB training corpus, held-out results, limitations, source licenses and reproduction commands. No retraining is needed to use this preset.
+
+## Trained tokenizer family
+
+The UI now has four local choices and one browser reference: Python Basic BPE, Rust Basic BPE, Python Regex BPE, custom SentencePiece BPE, and JavaScript `cl100k_base`. Each local choice loads a saved 16K vocabulary by default. Basic Python and Rust deliberately share one vocabulary; different implementation languages should not change token IDs. Temporary demo training creates a separate session model and never modifies release artifacts.
+
+`python training/train_family.py` trains Basic and SentencePiece from the exact file manifest and split of the Regex release, then evaluates all implementations on the same held-out files. Basic uses independent complete lines as training samples; SentencePiece uses lines split at 2048 characters. See `models/family-evaluation.json` for measured results. The SentencePiece preset is a new custom vocabulary, not the original Llama tokenizer. JavaScript BPE training and the extra reference encodings have been removed from the dropdown.
+
+## Correctness contracts and benchmarks
+
+See [tokenizer contracts](docs/tokenizer-contracts.md) for merge ordering, Unicode behavior, SentencePiece's checked byte fallback, external-model compatibility, and remaining performance limits. The Rust Llama prototype has now been completed; see [its API and design](docs/rust-sentencepiece.md).
+
+Run `python benchmarks/python_rust.py` after installing a release-built native extension (`pip install ./rust`). Results are written to `benchmarks/python-rust-results.json`; the comparison uses identical saved vocabularies and checks IDs before measuring.
+
+The native SentencePiece class is thoth_native.NativeLlama2Tokenizer. It supports standard model loading, checked/canonical encoding, optional BOS/EOS, decoding, batches, saving, and native custom BPE training. [Full examples and limits](docs/rust-sentencepiece.md).

@@ -30,6 +30,7 @@ def load(path):
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if (
         not isinstance(data, dict)
+        or type(data.get("version")) is not int
         or data.get("version") != 1
         or data.get("kind") not in ("basic", "regex")
     ):
