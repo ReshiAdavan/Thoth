@@ -25,7 +25,7 @@ class BasicTokenizer:
         return result
 
     def train(self, text, vocabSize):
-        if not isinstance(vocabSize, int) or vocabSize < 256:
+        if type(vocabSize) is not int or vocabSize < 256:
             raise ValueError("Vocabulary size must be at least 256")
         if not text:
             raise ValueError("Training text must not be empty")
@@ -61,6 +61,9 @@ class BasicTokenizer:
         return [token for chunk in self.chunks(text) for token in self.chunkify(chunk)]
 
     def decode_bytes(self, ids):
+        ids = list(ids)
+        if any(type(token) is not int or token < 0 for token in ids):
+            raise ValueError("Token IDs must be nonnegative integers")
         try:
             return b"".join(self.vocab[token] for token in ids)
         except KeyError as error:

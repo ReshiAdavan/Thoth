@@ -23,6 +23,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut weights = Vec::new();
     for line in BufReader::new(std::fs::File::open(&args[1])?).lines() {
         let (text, weight): (String, i64) = serde_json::from_str(&line?)?;
+        if weight <= 0 {
+            return Err("Sample weights must be positive integers".into());
+        }
         words.push(text.bytes().map(usize::from).collect::<Vec<_>>());
         weights.push(weight);
     }
