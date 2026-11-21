@@ -29,6 +29,6 @@ Regression tests cover literal whitespace markers, unseen emoji, NUL, combining 
 
 Run benchmarks/python_rust.py with a release-built native extension. The benchmark checks identical IDs and decoding before timing. It measures Python-to-native conversion costs, excludes model loading, warms each operation, and reports seven-trial medians and ranges. It uses repeated synthetic English, Python code and Unicode at several sizes; it is a microbenchmark, not a production corpus throughput claim. Training is measured separately at the same vocabulary target.
 
-Current implementations repeatedly scan sequences while merging. Long inputs may scale poorly. Native methods currently retain the GIL, and batch processing is sequential. Neither concurrent speedup nor streaming tokenization is claimed. Tokenizing independent chunks can change IDs at chunk boundaries; do not present naive chunking as equivalent streaming.
+Current implementations repeatedly scan sequences while merging. Long inputs may scale poorly. Basic BPE native methods retain the GIL. The new SentencePiece methods release it; batch processing remains sequential. Neither concurrent speedup nor streaming tokenization is claimed. Tokenizing independent chunks can change IDs at chunk boundaries; do not present naive chunking as equivalent streaming.
 
-The unfinished Rust Llama prototype is preserved under archive/rust, outside the active crate.
+The Rust Llama prototype is now a working module with native custom training. See [Rust SentencePiece design and API](rust-sentencepiece.md).

@@ -19,3 +19,7 @@ Decoding was 2.52–4.77× faster in Rust. Training the same 1,884-byte corpus t
 These repeated synthetic English/code/Unicode inputs are microbenchmarks. They do not establish a production SLA, representative large-corpus throughput, or multithreaded speedup. Both implementations still repeatedly scan sequences and retain limits described in [the contracts](../docs/tokenizer-contracts.md).
 
 Reproduce with a release native installation and python benchmarks/python_rust.py. Full samples are summarized as median/min/max timings in [the machine-readable results](python-rust-results.json).
+
+## SentencePiece runtime comparison
+
+Run python benchmarks/sentencepiece_runtime.py. This compares our checked Python adapter (Google’s C++ engine) against our Rust runtime with the same saved vocabulary. Rust encoding took approximately 1.30–1.54 times as long as C++; Rust decoding was 2.08–2.83 times faster. This is a different comparison from pure Python Basic BPE above. Native custom training is not timed against Google’s trainer because their training algorithms differ. See [full results](sentencepiece-results.json).

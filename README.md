@@ -57,7 +57,7 @@ npm run test:e2e
 
 The tests cover deterministic merges, Unicode round trips, invalid IDs/models, CLI subprocesses, reference encoding parity, SentencePiece model loading, and desktop/mobile browser interactions. `thoth compare` reports encoding time and token counts; custom BPE entries train on the input corpus, while named encodings are pretrained, so compression results are not a controlled model-quality comparison. Timing excludes training and encoding initialization.
 
-Rust demo: `cargo run --manifest-path rust/Cargo.toml --bin thoth -- 'Hello 🦉'`. The Rust executable exposes the working basic BPE implementation; the historical unfinished Llama implementation is not compiled. The train_bpe executable uses incremental weighted pair counts for release training.
+Rust demo: `cargo run --manifest-path rust/Cargo.toml --bin thoth -- 'Hello 🦉'`. The Rust executable exposes the working basic BPE implementation; the completed SentencePiece/Llama runtime is available as a Rust library and native Python class. The train_bpe executable uses incremental weighted pair counts for release training.
 
 ## Optional native Python backend
 
@@ -92,7 +92,7 @@ cd playground
 npm run dev
 ```
 
-The dropdown exposes Python BasicTokenizer, RegexTokenizer, the native Rust BasicTokenizer, and the SentencePiece adapter through a loopback-only service on port 8765, proxied by Vite. Each loads a saved 16K vocabulary. JavaScript cl100k_base is the sole reference choice. The unfinished historical Rust Llama implementation is not exposed.
+The dropdown exposes Python BasicTokenizer, RegexTokenizer, the native Rust BasicTokenizer, and the SentencePiece adapter through a loopback-only service on port 8765, proxied by Vite. Each loads a saved 16K vocabulary. JavaScript cl100k_base is the sole reference choice. The Rust SentencePiece runtime is available through the library; it has not yet been added to the dropdown.
 
 Temporary models are held in memory (up to 16) and expire when the server restarts or evicts them; release artifacts persist on disk. Browser cancellation ignores an in-flight server result; it does not interrupt native computation already running. Standalone static hosting supports the JavaScript reference only; local choices show a backend setup error if the service is unavailable.
 
@@ -110,6 +110,8 @@ The UI now has four local choices and one browser reference: Python Basic BPE, R
 
 ## Correctness contracts and benchmarks
 
-See [tokenizer contracts](docs/tokenizer-contracts.md) for merge ordering, Unicode behavior, SentencePiece's checked byte fallback, external-model compatibility, and remaining performance limits. The incomplete Rust Llama prototype is archived outside the active crate.
+See [tokenizer contracts](docs/tokenizer-contracts.md) for merge ordering, Unicode behavior, SentencePiece's checked byte fallback, external-model compatibility, and remaining performance limits. The Rust Llama prototype has now been completed; see [its API and design](docs/rust-sentencepiece.md).
 
 Run `python benchmarks/python_rust.py` after installing a release-built native extension (`pip install ./rust`). Results are written to `benchmarks/python-rust-results.json`; the comparison uses identical saved vocabularies and checks IDs before measuring.
+
+The native SentencePiece class is thoth_native.NativeLlama2Tokenizer. It supports standard model loading, checked/canonical encoding, optional BOS/EOS, decoding, batches, saving, and native custom BPE training. [Full examples and limits](docs/rust-sentencepiece.md).
