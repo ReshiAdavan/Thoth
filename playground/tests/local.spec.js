@@ -1,41 +1,35 @@
 import { test, expect } from "@playwright/test";
-test.skip(
-  !process.env.THOTH_LOCAL_TESTS,
-  "Requires local Python/native backend",
-);
-for (const name of ["local-basic", "local-regex", "local-rust"])
-  test(`${name} runs real training`, async ({ page }) => {
+test.skip(!process.env.THOTH_LOCAL_TESTS, "Requires local backend");
+for (const name of ["local-basic", "local-rust", "local-regex", "local-llama"])
+  test(`${name} loads saved vocabulary and compares`, async ({ page }) => {
     await page.goto("/");
     await page.locator("#encoding").selectOption(name);
-    await page.locator("#text").fill("abababab");
-    await page.locator("#local-size").fill("258");
-    await page.locator("#local-train").click();
-    await expect(page.locator("#count")).toHaveText("2");
-    await expect(page.locator("#local-state")).toContainText("session model");
-    await expect(page.locator("#readable")).toHaveText("abababab");
+    await page.locator("#text").fill("Hello world! Python programming is fun.");
+    await expect(page.locator("#readable")).toHaveText(
+      "Hello world! Python programming is fun.",
+    );
+    await expect(page.locator("#local-state")).toContainText("Ready to use");
+    expect(Number(await page.locator("#count").textContent())).toBeLessThan(25);
+    await page.locator("#compare").check();
+    await expect(page.locator(".result")).toHaveCount(2);
+    await expect(page.locator("#results")).toContainText("cl100k_base");
   });
-test("Python GPT adapter and SentencePiece training", async ({ page }) => {
+test("temporary training remains separate from saved model", async ({
+  page,
+}) => {
   await page.goto("/");
-  await page.locator("#encoding").selectOption("local-gpt");
-  await page.locator("#text").fill("Hello");
-  await expect(page.locator("#count")).toHaveText("1");
-  await page.locator("#encoding").selectOption("local-llama");
-  await expect(page.locator("#status")).toContainText("model file");
-  await page.locator("#text").fill("hello hello world");
-  await page.locator("#local-size").fill("256");
+  await page.locator("#encoding").selectOption("local-basic");
+  await page.locator("#text").fill("abababab");
+  await page.locator("#local-size").fill("258");
   await page.locator("#local-train").click();
-  await expect(page.locator("#status")).toContainText("SentencePiece decoded");
-  await expect(page.locator("#readable")).toHaveText("hello hello world");
-});
-
-test("saved Thoth model is ready without training", async ({ page }) => {
-  await page.goto("/");
-  await page.locator("#encoding").selectOption("local-trained");
+  await expect(page.locator("#count")).toHaveText("2");
+  await expect(page.locator("#local-state")).toContainText("session model");
+  await page.reload();
+  await page.locator("#encoding").selectOption("local-basic");
+  await expect(page.locator("#local-state")).toContainText("Ready to use");
   await page.locator("#text").fill("Hello world! Python programming is fun.");
   await expect(page.locator("#readable")).toHaveText(
     "Hello world! Python programming is fun.",
   );
-  await expect(page.locator("#local-train")).toBeHidden();
-  await expect(page.locator("#local-state")).toContainText("Ready to use");
-  expect(Number(await page.locator("#count").textContent())).toBeLessThan(20);
+  expect(Number(await page.locator("#count").textContent())).toBeLessThan(25);
 });

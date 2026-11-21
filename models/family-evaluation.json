@@ -1,0 +1,43 @@
+{
+  "vocabulary_target": 16384,
+  "basic_training_boundaries": "independent complete lines, not regex splitting",
+  "sentencepiece_training_boundaries": "lines split at 2048 Unicode characters; blank lines omitted by iterator",
+  "source_manifest": "thoth-code-en-v1.report.json",
+  "results": {
+    "code_and_docs": {
+      "bytes": 5370665,
+      "basic": 1153864,
+      "rust": 1153864,
+      "regex": 1387382,
+      "sentencepiece": 2246621,
+      "cl100k_base": 1295555,
+      "roundtrips": {
+        "basic": 226,
+        "rust": 226,
+        "regex": 226,
+        "sentencepiece": 226
+      },
+      "files": 226
+    },
+    "prose": {
+      "bytes": 786817,
+      "basic": 173958,
+      "rust": 173958,
+      "regex": 199793,
+      "sentencepiece": 209102,
+      "cl100k_base": 184948,
+      "roundtrips": {
+        "basic": 2,
+        "rust": 2,
+        "regex": 2,
+        "sentencepiece": 2
+      },
+      "files": 2
+    }
+  },
+  "seconds": 312.2237157821655,
+  "artifacts": {
+    "thoth-basic-en-code-v1.json": "d047ebb82268df2f688d7e5f42db6202abb1503be5c8c39a1815507da6f84c30",
+    "thoth-sentencepiece-en-code-v1.model": "085be4ac9d33b38cfe1a5919b15ef0c17d92bdfc6b04ca38020d5558774c50cf"
+  }
+}

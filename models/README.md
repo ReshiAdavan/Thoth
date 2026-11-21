@@ -25,7 +25,7 @@ All 228 held-out files round-trip exactly after saving and reloading. Thoth uses
 
 ## Use
 
-Select **Thoth English + Code v1 · trained 16K** in the local playground, with `python -m thoth_demo` running. It loads the committed model without retraining. CLI:
+Select **Regex BPE · Python · trained 16K** in the local playground, with `python -m thoth_demo` running. It loads the committed model without retraining. CLI:
 
 ```sh
 printf 'Hello world!\n' | thoth encode --model models/thoth-code-en-v1.json
@@ -47,3 +47,24 @@ Archive hashes are recorded and checked by the training script. No GPU is needed
 ## Attribution
 
 CPython source/documentation is covered by the included [CPython license](CPython-LICENSE.txt). The tokenizer artifacts were generated from selected files and are not unmodified CPython source. NLTK identifies its Gutenberg selections as public domain: <https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/gutenberg.xml>. Source archive provenance and checksums are retained in the report.
+
+## Saved tokenizer family
+
+All releases use the same source-file manifest and held-out split above, with 16,384 vocabulary entries. Python and Rust Basic BPE share one saved vocabulary and produce identical IDs. Basic uses complete independent lines as training samples; Regex uses regex chunks; SentencePiece uses lines split at 2,048 Unicode characters with identity normalization, byte fallback, and whitespace preservation. The SentencePiece algorithm comes from the external library; this is our custom-trained vocabulary, not an original Llama model.
+
+| Implementation | Code/docs tokens | Prose tokens | Total tokens |
+|---|---:|---:|---:|
+| Basic BPE (Python and Rust) | 1,153,864 | 173,958 | 1,327,822 |
+| Regex BPE (Python) | 1,387,382 | 199,793 | 1,587,175 |
+| Custom SentencePiece BPE | 2,246,621 | 209,102 | 2,455,723 |
+| cl100k_base reference | 1,295,555 | 184,948 | 1,480,503 |
+
+Each local implementation recovered all 228 held-out files exactly after reloading its saved artifact. Basic used 10.3% fewer tokens than the reference, Regex 7.2% more, and SentencePiece 65.9% more. This measures compression on this corpus, not language-model quality or general superiority. The training boundary choices differ, and the corpus strongly favors Python and historical English.
+
+Artifacts:
+- `thoth-basic-en-code-v1.json`: shared Python/Rust byte merges.
+- `thoth-code-en-v1.json`: Python Regex byte merges and pattern.
+- `thoth-sentencepiece-en-code-v1.model`: serialized SentencePiece model; accompanying `.vocab` is human-readable.
+- `family-evaluation.json`: counts, round trips, boundaries, and artifact hashes.
+
+After reproducing the Regex release, run `python training/train_family.py` with Cargo, the native extension, SentencePiece and tiktoken installed. It verifies cached archives and every source file against the release manifest, trains Basic with the Rust incremental trainer, trains SentencePiece, and evaluates saved models. Basic evaluation processes independent lines; its training learns no merges across these boundaries. Raw training samples remain ignored in `training/cache/`.

@@ -11,11 +11,9 @@ const colors = [
   "#dbacc2",
   "#b6c4ee",
 ];
-let model = { version: 1, kind: "basic", merges: [] },
-  ids = [],
+let ids = [],
   mapping = null,
   timer,
-  playTimer,
   revision = 0;
 const samples = {
   code: 'def hello(name):\n    return f"Hello, {name}!"',
@@ -27,7 +25,6 @@ let localAbort;
 function stop() {
   localAbort?.abort();
   clearTimeout(timer);
-  clearInterval(playTimer);
   client.cancel();
   revision++;
 }
@@ -110,8 +107,11 @@ function render(result, text) {
   $("copy").disabled = false;
   $("status").textContent =
     `${text.length} UTF-16 units · ${new TextEncoder().encode(text).length} UTF-8 bytes · ${ids.length} tokens`;
+  renderCounts(result.counts);
+}
+function renderCounts(counts) {
   $("results").replaceChildren();
-  for (const [name, count] of Object.entries(result.counts)) {
+  for (const [name, count] of Object.entries(counts)) {
     const div = document.createElement("div");
     div.className = "result";
     div.textContent = name;
@@ -131,18 +131,11 @@ async function update() {
   $("local-controls").hidden = !local;
   $("local-train").hidden = ["local-gpt", "local-trained"].includes(name);
   $("sp-upload-label").hidden = name !== "local-llama";
-  $("compare").disabled = local;
+  $("compare").disabled = false;
   $("local-state").textContent = localModels[name]
     ? "Using your trained/imported session model."
-    : name === "local-trained"
-      ? "Saved 16,384-token English + code vocabulary. Ready to use; no training required."
-      : name === "local-llama"
-        ? "Train a demo vocabulary or import the original SentencePiece model to begin."
-        : name === "local-gpt"
-          ? "Reference cl100k_base through our Python GPT4Tokenizer adapter."
-          : "Base byte vocabulary; train to learn merges.";
-  $("training").hidden = name !== "custom";
-  $("comparison").hidden = local || !$("compare").checked;
+    : "Saved 16,384-token English + code vocabulary. Ready to use; no training required.";
+  $("comparison").hidden = !$("compare").checked;
   $("status").textContent = "Tokenizing…";
   try {
     if (local) {
@@ -151,6 +144,7 @@ async function update() {
         name,
         text,
         modelId: localModels[name],
+        compare: $("compare").checked,
       });
       if (current === revision)
         result.pieces ? renderPieces(result) : render(result, text);
@@ -160,7 +154,6 @@ async function update() {
       operation: "encode",
       text,
       name: $("encoding").value,
-      model,
       compare: $("compare").checked,
     });
     if (current === revision) render(result, text);
@@ -207,95 +200,6 @@ $("copy").onclick = async () => {
     $("status").textContent = "Clipboard unavailable in this browser";
   }
 };
-async function trace() {
-  const current = revision,
-    step = Number($("step").value);
-  try {
-    const tokens = await client.request({
-      operation: "trace",
-      text: $("text").value,
-      model,
-      step,
-    });
-    if (current === revision)
-      $("trace").textContent =
-        `Step ${step}/${model.merges.length}: [${tokens.join(", ")}]`;
-  } catch (e) {
-    failure(e);
-  }
-}
-function modelChanged(message) {
-  $("merges").textContent = message;
-  $("step").max = model.merges.length;
-  $("step").value = 0;
-  $("trace").textContent = "";
-  return update();
-}
-$("train").onclick = async () => {
-  stop();
-  const current = revision;
-  $("status").textContent = "Training…";
-  try {
-    const next = await client.request({
-      operation: "train",
-      text: $("text").value,
-      size: Number($("vocab").value),
-    });
-    if (current !== revision) return;
-    model = next;
-    await modelChanged(
-      `Learned ${model.merges.length} merges · ${256 + model.merges.length} vocabulary entries`,
-    );
-  } catch (e) {
-    failure(e);
-  }
-};
-$("import").onchange = async (e) => {
-  stop();
-  const current = revision;
-  try {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 1_000_000) throw Error("Model file exceeds 1 MB");
-    const json = await file.text();
-    if (current !== revision) return;
-    const next = await client.request({ operation: "import", json });
-    if (current !== revision) return;
-    model = next;
-    await modelChanged(`Imported ${model.merges.length} merges`);
-  } catch (e) {
-    failure(e);
-  } finally {
-    e.target.value = "";
-  }
-};
-$("export").onclick = () => {
-  const url = URL.createObjectURL(
-    new Blob([JSON.stringify(model, null, 2)], { type: "application/json" }),
-  );
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "thoth-model.json";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
-$("step").oninput = () => {
-  clearInterval(playTimer);
-  trace();
-};
-$("play").onclick = async () => {
-  clearInterval(playTimer);
-  $("step").value = 0;
-  await trace();
-  playTimer = setInterval(async () => {
-    if (Number($("step").value) >= model.merges.length) {
-      clearInterval(playTimer);
-      return;
-    }
-    $("step").value = Number($("step").value) + 1;
-    await trace();
-  }, 500);
-};
 $("cancel").onclick = () => {
   stop();
   $("status").textContent =
@@ -324,6 +228,7 @@ async function localRequest(data) {
   return result;
 }
 function renderPieces(result) {
+  renderCounts(result.counts);
   ids = result.ids;
   mapping = null;
   $("tokens").replaceChildren();

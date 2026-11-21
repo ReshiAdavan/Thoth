@@ -1,0 +1,296 @@
+{
+  "platform": "macOS-15.1-arm64-arm-64bit-Mach-O",
+  "repeats": 7,
+  "model_sha256": "085be4ac9d33b38cfe1a5919b15ef0c17d92bdfc6b04ca38020d5558774c50cf",
+  "method": "Checked lossless APIs; Python adapter runs Google's C++ SentencePiece, Rust adapter runs Thoth heap-based BPE with sentencepiece-rs normalization/decoding. Same saved model and IDs, release build, warm-up and seven trials. Synthetic repeated inputs. Training is not compared because the two trainers implement different procedures.",
+  "results": [
+    {
+      "corpus": "english",
+      "bytes": 256,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 0.016875,
+        "min_ms": 0.015917,
+        "max_ms": 0.021917
+      },
+      "rust": {
+        "median_ms": 0.023875,
+        "min_ms": 0.023042,
+        "max_ms": 0.030959
+      },
+      "rust_speedup": 0.7068062827225131
+    },
+    {
+      "corpus": "english",
+      "bytes": 256,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 0.013375,
+        "min_ms": 0.010625,
+        "max_ms": 0.015583
+      },
+      "rust": {
+        "median_ms": 0.006416,
+        "min_ms": 0.006042,
+        "max_ms": 0.006542
+      },
+      "rust_speedup": 2.08463216957606
+    },
+    {
+      "corpus": "english",
+      "bytes": 4096,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 0.358959,
+        "min_ms": 0.332042,
+        "max_ms": 0.416125
+      },
+      "rust": {
+        "median_ms": 0.505208,
+        "min_ms": 0.491875,
+        "max_ms": 0.576708
+      },
+      "rust_speedup": 0.7105172523000427
+    },
+    {
+      "corpus": "english",
+      "bytes": 4096,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 0.144709,
+        "min_ms": 0.143084,
+        "max_ms": 0.1465
+      },
+      "rust": {
+        "median_ms": 0.060083,
+        "min_ms": 0.05975,
+        "max_ms": 0.0605
+      },
+      "rust_speedup": 2.4084849291812995
+    },
+    {
+      "corpus": "english",
+      "bytes": 16384,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 1.829958,
+        "min_ms": 1.79275,
+        "max_ms": 1.889542
+      },
+      "rust": {
+        "median_ms": 2.38175,
+        "min_ms": 2.369209,
+        "max_ms": 2.526083
+      },
+      "rust_speedup": 0.7683249711346699
+    },
+    {
+      "corpus": "english",
+      "bytes": 16384,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 0.57925,
+        "min_ms": 0.565291,
+        "max_ms": 0.605
+      },
+      "rust": {
+        "median_ms": 0.244,
+        "min_ms": 0.229542,
+        "max_ms": 0.266125
+      },
+      "rust_speedup": 2.3739754098360657
+    },
+    {
+      "corpus": "code",
+      "bytes": 256,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 0.016666,
+        "min_ms": 0.016541,
+        "max_ms": 0.023166
+      },
+      "rust": {
+        "median_ms": 0.024875,
+        "min_ms": 0.023625,
+        "max_ms": 0.026167
+      },
+      "rust_speedup": 0.6699899497487437
+    },
+    {
+      "corpus": "code",
+      "bytes": 256,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 0.01975,
+        "min_ms": 0.017917,
+        "max_ms": 0.020708
+      },
+      "rust": {
+        "median_ms": 0.007375,
+        "min_ms": 0.007375,
+        "max_ms": 0.007708
+      },
+      "rust_speedup": 2.6779661016949152
+    },
+    {
+      "corpus": "code",
+      "bytes": 4096,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 0.329209,
+        "min_ms": 0.301,
+        "max_ms": 0.376084
+      },
+      "rust": {
+        "median_ms": 0.506458,
+        "min_ms": 0.470292,
+        "max_ms": 0.532459
+      },
+      "rust_speedup": 0.650022311820526
+    },
+    {
+      "corpus": "code",
+      "bytes": 4096,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 0.276333,
+        "min_ms": 0.271625,
+        "max_ms": 0.325084
+      },
+      "rust": {
+        "median_ms": 0.109667,
+        "min_ms": 0.109334,
+        "max_ms": 0.112292
+      },
+      "rust_speedup": 2.519746140589238
+    },
+    {
+      "corpus": "code",
+      "bytes": 16384,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 1.584667,
+        "min_ms": 1.569083,
+        "max_ms": 1.683833
+      },
+      "rust": {
+        "median_ms": 2.298292,
+        "min_ms": 2.215667,
+        "max_ms": 2.387458
+      },
+      "rust_speedup": 0.689497679146079
+    },
+    {
+      "corpus": "code",
+      "bytes": 16384,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 1.108458,
+        "min_ms": 1.094959,
+        "max_ms": 1.147667
+      },
+      "rust": {
+        "median_ms": 0.428375,
+        "min_ms": 0.420541,
+        "max_ms": 0.445917
+      },
+      "rust_speedup": 2.5875879778231687
+    },
+    {
+      "corpus": "unicode",
+      "bytes": 256,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 0.015667,
+        "min_ms": 0.015375,
+        "max_ms": 0.016416
+      },
+      "rust": {
+        "median_ms": 0.021084,
+        "min_ms": 0.018875,
+        "max_ms": 0.021833
+      },
+      "rust_speedup": 0.743075317776513
+    },
+    {
+      "corpus": "unicode",
+      "bytes": 256,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 0.028167,
+        "min_ms": 0.027584,
+        "max_ms": 0.028458
+      },
+      "rust": {
+        "median_ms": 0.010334,
+        "min_ms": 0.01025,
+        "max_ms": 0.010542
+      },
+      "rust_speedup": 2.725662860460616
+    },
+    {
+      "corpus": "unicode",
+      "bytes": 4095,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 0.223042,
+        "min_ms": 0.212542,
+        "max_ms": 0.286167
+      },
+      "rust": {
+        "median_ms": 0.314167,
+        "min_ms": 0.311666,
+        "max_ms": 0.325083
+      },
+      "rust_speedup": 0.7099472573503901
+    },
+    {
+      "corpus": "unicode",
+      "bytes": 4095,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 0.428667,
+        "min_ms": 0.42375,
+        "max_ms": 0.468542
+      },
+      "rust": {
+        "median_ms": 0.151625,
+        "min_ms": 0.151209,
+        "max_ms": 0.178375
+      },
+      "rust_speedup": 2.8271525144270404
+    },
+    {
+      "corpus": "unicode",
+      "bytes": 16384,
+      "operation": "encode",
+      "python_cpp": {
+        "median_ms": 0.961541,
+        "min_ms": 0.934625,
+        "max_ms": 1.055833
+      },
+      "rust": {
+        "median_ms": 1.392334,
+        "min_ms": 1.36175,
+        "max_ms": 1.408
+      },
+      "rust_speedup": 0.6905965091709317
+    },
+    {
+      "corpus": "unicode",
+      "bytes": 16384,
+      "operation": "decode",
+      "python_cpp": {
+        "median_ms": 1.774292,
+        "min_ms": 1.72425,
+        "max_ms": 1.931833
+      },
+      "rust": {
+        "median_ms": 0.641291,
+        "min_ms": 0.630125,
+        "max_ms": 0.686958
+      },
+      "rust_speedup": 2.766750196088827
+    }
+  ]
+}

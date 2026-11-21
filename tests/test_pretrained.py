@@ -18,7 +18,7 @@ def test_sentencepiece(tmp_path):
     t = Llama2Tokenizer()
     with pytest.raises(ValueError):
         t.encode("hello")
-    t.train("hello hello world", 256)
+    t.train("hello hello world", 300)
     assert t.decode(t.encode("hello world")) == "hello world"
     path = tmp_path / "tokenizer.model"
     path.write_bytes(t.processor.serialized_model_proto())

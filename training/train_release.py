@@ -45,6 +45,9 @@ def train_counts(chunks, size, progress=None):
         for p in changed:
             if counts[p] > 0:
                 heapq.heappush(heap, (-counts[p], p))
+        if len(heap) > max(100000, len(counts) * 4):
+            heap = [(-n, p) for p, n in counts.items() if n > 0]
+            heapq.heapify(heap)
         if progress and token % 1000 == 0:
             progress(token)
     return t

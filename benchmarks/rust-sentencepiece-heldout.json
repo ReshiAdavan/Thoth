@@ -1,0 +1,9 @@
+{
+  "model_sha256": "085be4ac9d33b38cfe1a5919b15ef0c17d92bdfc6b04ca38020d5558774c50cf",
+  "source_manifest": "models/thoth-code-en-v1.report.json",
+  "files": 228,
+  "utf8_bytes": 6157482,
+  "tokens": 2455723,
+  "matching_python_ids": true,
+  "exact_roundtrip": true
+}
