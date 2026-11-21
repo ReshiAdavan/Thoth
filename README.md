@@ -115,3 +115,32 @@ See [tokenizer contracts](docs/tokenizer-contracts.md) for merge ordering, Unico
 Run `python benchmarks/python_rust.py` after installing a release-built native extension (`pip install ./rust`). Results are written to `benchmarks/python-rust-results.json`; the comparison uses identical saved vocabularies and checks IDs before measuring.
 
 The native SentencePiece class is thoth_native.NativeLlama2Tokenizer. It supports standard model loading, checked/canonical encoding, optional BOS/EOS, decoding, batches, saving, and native custom BPE training. [Full examples and limits](docs/rust-sentencepiece.md).
+
+## TODO: tokenizer roadmap
+
+Proposals for future work, not promises of compatibility or performance. Prioritize the tokenizer library before expanding the playground. Check an item off only when its behavior is documented, regression tests pass, and any performance claims have reproducible evidence.
+
+### Correctness and compatibility
+
+- [ ] **Validate original Llama model compatibility.** Add an opt-in fixture for a user-supplied original model and compare canonical IDs, normalization, BOS/EOS, and decoding against the official reference; keep custom vocabularies clearly distinct.
+- [ ] **Expand adversarial testing.** Fuzz model imports and Unicode inputs, including malformed protobufs, pathological regex patterns, byte-token boundaries, and user-defined/unused SentencePiece pieces; require bounded failures instead of crashes or hangs.
+- [ ] **Unify tokenizer interfaces.** Define consistent validation, error types, batch methods, model metadata, and explicit canonical/lossless modes across Python and Rust without silently changing existing token IDs.
+- [ ] **Track model provenance.** Version training settings, corpus licenses and hashes, preprocessing, vocabulary checksums, and evaluation splits alongside every release artifact.
+
+### Training, evaluation, and performance
+
+- [ ] **Scale native SentencePiece-format training.** Replace repeated full-corpus pair counting with incremental weighted updates, measure memory use, and add progress/cancellation and resumable checkpoints before increasing the current training limits.
+- [ ] **Broaden the English/code corpus.** Add licensed modern prose and multiple programming languages, deduplicate across train/test splits, and evaluate vocabulary sizes on held-out domains before choosing a new release.
+- [ ] **Benchmark realistic workloads.** Measure throughput, p50/p95 latency, peak memory, model-load cost, long-input scaling, and batches on real held-out files; compare identical model IDs and distinguish pure Python from Python wrappers around C++.
+- [ ] **Optimize Basic BPE and batching.** Evaluate ranked merge queues, releasing the Rust binding's GIL, and parallel batches; retain deterministic output and prove gains against the existing baseline.
+- [ ] **Add multilingual quality reports.** Report tokens per UTF-8 byte, fallback/unknown-token rates, and exact-recovery rates by language and code domain, including normalization-sensitive text.
+
+### Tokenizer extensions
+
+- [ ] **Implement Rust Regex BPE.** Load the same pattern and merges as Python and verify matching split boundaries and token IDs, including Unicode properties and regex-dialect differences.
+- [ ] **Expose token offsets.** Return byte spans and special-token metadata; explicitly represent normalized or synthetic output rather than inventing exact input offsets.
+- [ ] **Investigate exact streaming.** Define buffering and boundary rules that preserve whole-input tokenization; test arbitrary chunk boundaries and document models for which bounded buffering cannot guarantee identical IDs.
+- [ ] **Add optional BPE dropout.** Support seeded stochastic segmentation for training while keeping ordinary inference deterministic and model-compatible.
+- [ ] **Explore native Unigram or WordPiece training.** Write a design and reference-parity plan first; distinguish new vocabulary training from the existing Unigram model-loading support.
+
+For complex changes, add a design note under [docs](docs/) covering algorithm choices, model-format impact, compatibility, failure modes, and acceptance tests. Start from the [tokenizer contracts](docs/tokenizer-contracts.md), [Rust SentencePiece design](docs/rust-sentencepiece.md), and [benchmark baseline](benchmarks/README.md).
