@@ -26,7 +26,22 @@ impl NativeTokenizer {
     fn encode_batch(&self, texts: Vec<String>) -> Vec<Vec<usize>> {
         texts.iter().map(|s| self.inner.encoder(s)).collect()
     }
-    fn decode(&self, ids: Vec<usize>) -> PyResult<String> {
+    fn decode(&self, ids: Vec<Bound<'_, PyAny>>) -> PyResult<String> {
+        let ids: Vec<usize> = ids
+            .iter()
+            .map(|id| {
+                if !id.is_exact_instance_of::<pyo3::types::PyInt>() {
+                    return Err(pyo3::exceptions::PyValueError::new_err(
+                        "Token IDs must be nonnegative integers",
+                    ));
+                }
+                id.extract::<usize>().map_err(|_| {
+                    pyo3::exceptions::PyValueError::new_err(
+                        "Token IDs must be nonnegative integers",
+                    )
+                })
+            })
+            .collect::<PyResult<_>>()?;
         self.inner
             .decoder(ids)
             .map_err(pyo3::exceptions::PyValueError::new_err)

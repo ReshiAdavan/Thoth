@@ -20,7 +20,7 @@ def test_sentencepiece_demo():
             "name": "local-llama",
             "operation": "train",
             "text": "hello hello world",
-            "size": 256,
+            "size": 300,
         }
     )
     result = execute(

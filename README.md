@@ -21,7 +21,7 @@ Commands accept `--input` and `--output`; omitted input reads stdin. Encode emit
 
 `BasicTokenizer` and `RegexTokenizer` provide `train`, `encode`, `decode`, `decode_bytes`, and `encode_batch`; legacy `encoder`/`decoder` aliases remain. Empty encoding/decoding is supported; training rejects empty text. Invalid IDs and invalid UTF-8 decoding raise errors. Training stops when no pairs remain, so the requested vocabulary is an upper bound. Retraining resets the model. Equal-frequency pairs use lexicographic ordering.
 
-`Llama2Tokenizer(model_file='tokenizer.model')` requires the original model for exact compatibility. Its optional training method creates a new SentencePiece model, not a pretrained Llama vocabulary. SentencePiece normalization and unknown-token behavior follow the loaded model; arbitrary unseen text is not guaranteed lossless.
+`Llama2Tokenizer(model_file='tokenizer.model')` requires the original model for exact compatibility. Its optional training method creates a new SentencePiece model, not a pretrained Llama vocabulary. The adapter checks exact text recovery, uses explicit byte pieces when needed and available, and raises an error if a loaded model cannot preserve the input. This checked mode can differ from canonical Llama/SentencePiece IDs on exceptional text; see the tokenizer contracts.
 
 ## Playground
 
@@ -107,3 +107,9 @@ The playground includes **Regex BPE · Python · trained 16K**, backed by the co
 The UI now has four local choices and one browser reference: Python Basic BPE, Rust Basic BPE, Python Regex BPE, custom SentencePiece BPE, and JavaScript `cl100k_base`. Each local choice loads a saved 16K vocabulary by default. Basic Python and Rust deliberately share one vocabulary; different implementation languages should not change token IDs. Temporary demo training creates a separate session model and never modifies release artifacts.
 
 `python training/train_family.py` trains Basic and SentencePiece from the exact file manifest and split of the Regex release, then evaluates all implementations on the same held-out files. Basic uses independent complete lines as training samples; SentencePiece uses lines split at 2048 characters. See `models/family-evaluation.json` for measured results. The SentencePiece preset is a new custom vocabulary, not the original Llama tokenizer. JavaScript BPE training and the extra reference encodings have been removed from the dropdown.
+
+## Correctness contracts and benchmarks
+
+See [tokenizer contracts](docs/tokenizer-contracts.md) for merge ordering, Unicode behavior, SentencePiece's checked byte fallback, external-model compatibility, and remaining performance limits. The incomplete Rust Llama prototype is archived outside the active crate.
+
+Run `python benchmarks/python_rust.py` after installing a release-built native extension (`pip install ./rust`). Results are written to `benchmarks/python-rust-results.json`; the comparison uses identical saved vocabularies and checks IDs before measuring.
